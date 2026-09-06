@@ -1,9 +1,10 @@
 /* oxlint-disable jsx-a11y/prefer-tag-over-role, jsx-a11y/no-noninteractive-tabindex -- SVG nodes need explicit interactive roles; the scrollable graph must be keyboard reachable. */
 'use client';
 import { useMemo, useState } from 'react';
+import { profileFor } from '@/lib/catalog';
 import { MousePointer2, Network, Minus, Plus } from 'lucide-react';
 import {
-  FABRICS,
+  fabricInfo,
   NODES,
   LEAVES,
   SPINES,
@@ -29,7 +30,7 @@ export default function Topology({
   const LINKS = model.links;
   const [hovered, setHovered] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const f = FABRICS[fabric];
+  const f = fabricInfo(model, fabric);
   const focus = hovered ?? selected?.split('/')[0] ?? null;
   const { placed, headings } = useMemo(() => {
     const placed: Placed[] = [];
@@ -38,12 +39,77 @@ export default function Topology({
       items.forEach((item, i) =>
         placed.push({
           item,
-          x: 70 + i * (860 / Math.max(items.length - 1, 1)),
+          x:
+            items.length === 1
+              ? 500
+              : 70 + i * (860 / Math.max(items.length - 1, 1)),
           y,
           subtitle,
         }),
       );
-    if (model.id !== 'h100-cluster') {
+    if (model.fabricExample) {
+      const edges = model.links.filter((l) => l.fabric === fabric),
+        connected = new Set(edges.flatMap((l) => [l.from, l.to]));
+      const items = model.hardware.filter((h) => connected.has(h.id)),
+        roles = model.fabricExample.roles;
+      let y = 110;
+      const group = (role: string, label: string, note: string) => {
+        const members = items.filter((h) => roles[h.id] === role);
+        if (!members.length) return;
+        headings.push({ y: y - 65, label, note });
+        for (let offset = 0; offset < members.length; offset += 8) {
+          const batch = members.slice(offset, offset + 8);
+          row(batch, y, '');
+          for (const entry of placed.slice(-batch.length))
+            entry.subtitle =
+              entry.item.rack === 'EXAMPLE'
+                ? 'Example equipment'
+                : `${entry.item.rack} · ${profileFor(entry.item).category}`;
+          y += 100;
+        }
+        y += 100;
+      };
+      if (fabric === 'compute') {
+        group(
+          'spine',
+          'EXAMPLE SPINE LAYER',
+          `${model.fabricExample.computeTransport} · ${model.fabricExample.computeRate} Gb/s nominal`,
+        );
+        group(
+          'leaf',
+          'EXAMPLE LEAF LAYER',
+          'Grouped links; hover to isolate a path',
+        );
+        group(
+          'compute',
+          'COMPUTE ENDPOINTS',
+          'Illustrative allocation of catalog ports / adapter slots',
+        );
+      } else if (fabric === 'frontend') {
+        group(
+          'frontend',
+          'EXAMPLE FRONT-END SWITCHES',
+          '100 GbE · example provisioning and access paths',
+        );
+        group(
+          'compute',
+          'COMPUTE ENDPOINTS',
+          'Front-end allocation depends on the example I/O budget',
+        );
+      } else {
+        group('compute', 'COMPUTE ENDPOINTS', '400 Gb/s example storage links');
+        group(
+          'storage-switch',
+          'EXAMPLE STORAGE SWITCHES',
+          model.fabricExample.computeTransport + ' · separate storage paths',
+        );
+        group(
+          'array',
+          'SHARED FLASH',
+          '4 × 200 Gb/s links to each storage switch',
+        );
+      }
+    } else if (model.id !== 'h100-cluster') {
       const edges = model.links.filter((l) => l.fabric === fabric),
         connected = new Set(edges.flatMap((l) => [l.from, l.to]));
       const devices = model.hardware.filter((h) => connected.has(h.id));
@@ -164,13 +230,20 @@ export default function Topology({
     <div className="topology-view">
       <div className="topology-heading">
         <div>
-          <h1>{f.name}</h1>
+          <h1>
+            {f.name}
+            {model.fabricExample && fabric === 'compute'
+              ? ` · ${model.fabricExample.computeTransport}`
+              : ''}
+          </h1>
           <p>
-            {model.id === 'h100-cluster'
-              ? f.description
-              : model.racks.some((r) => r.mount === 'NVL72')
-                ? 'The rack’s internal NVLink domain is separate from external compute, front-end and storage fabrics. No external fabric has been configured.'
-                : 'Connections reflect your planned layout. No links are inferred from placement.'}
+            {model.fabricExample
+              ? 'Illustrative connections and supporting equipment for this platform. Turn off Example fabrics to return to the hardware-only preset.'
+              : model.id === 'h100-cluster'
+                ? f.description
+                : model.racks.some((r) => r.mount === 'NVL72')
+                  ? 'The rack’s internal NVLink domain is separate from external compute, front-end and storage fabrics. No external fabric has been configured.'
+                  : 'Connections reflect your planned layout. No links are inferred from placement.'}
           </p>
         </div>
         <span className="topology-link-count">
@@ -264,6 +337,7 @@ export default function Topology({
             const active = l.from === focus || l.to === focus;
             return (
               <g key={l.id}>
+                <title>{l.label}</title>
                 <path
                   d={path}
                   fill="none"
@@ -385,13 +459,15 @@ export default function Topology({
       <div className="topology-note">
         <Network size={15} />
         <span>
-          {model.id !== 'h100-cluster'
-            ? 'Planned nominal rates. Protocol, adapter, transceiver and cable compatibility are not validated here.'
-            : fabric === 'compute'
-              ? 'Each leaf–spine line groups 8 × 400 Gb/s links. Node–leaf lines are 1 × 400 Gb/s.'
-              : fabric === 'storage'
-                ? 'Each appliance–switch line groups 4 × 200 Gb/s links. Node links are 1 × 400 Gb/s.'
-                : 'Each node has one 100 GbE link per switch. The peer link groups 2 × 100 GbE.'}
+          {model.fabricExample
+            ? model.fabricExample.note
+            : model.id !== 'h100-cluster'
+              ? 'Planned nominal rates. Protocol, adapter, transceiver and cable compatibility are not validated here.'
+              : fabric === 'compute'
+                ? 'Each leaf–spine line groups 8 × 400 Gb/s links. Node–leaf lines are 1 × 400 Gb/s.'
+                : fabric === 'storage'
+                  ? 'Each appliance–switch line groups 4 × 200 Gb/s links. Node links are 1 × 400 Gb/s.'
+                  : 'Each node has one 100 GbE link per switch. The peer link groups 2 × 100 GbE.'}
         </span>
       </div>
     </div>

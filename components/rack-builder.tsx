@@ -148,7 +148,7 @@ export default function RackBuilder({
     );
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'rack-explore-layout.json';
+    a.download = 'physical-compute-layout.json';
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     setMessage('Layout exported.');

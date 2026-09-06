@@ -207,6 +207,7 @@ export function cloneForBuilder(model: ClusterModel): ClusterModel {
     );
   return {
     ...structuredClone(model),
+    fabricExample: undefined,
     id: 'custom',
     custom: true,
     title: `${model.title} · custom`,
@@ -335,7 +336,7 @@ export function importModel(text: string): ClusterModel {
   if (text.length > 250000) throw new Error('Configuration file is too large.');
   const data = obj(JSON.parse(text));
   if (data.format !== 'rack-explore' || data.version !== 1)
-    throw new Error('Choose a Rack Explore v1 JSON file.');
+    throw new Error('Choose a Physical Compute v1 JSON file.');
   if (
     !Array.isArray(data.racks) ||
     data.racks.length < 1 ||

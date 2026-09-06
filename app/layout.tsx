@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Rack Explore — HPC hardware explorer',
+  title: 'Physical Compute — HPC hardware explorer',
   description:
     'Explore HPC hardware in 3D, inspect boards and components, compare NVIDIA, AMD and OEM platforms, and build custom rack layouts.',
 };

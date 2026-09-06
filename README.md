@@ -1,4 +1,4 @@
-# Rack Explore
+# Physical Compute
 
 An interactive HPC hardware explorer built with React, Vinext, Three.js, and the installed shadcn/Base UI components.
 
@@ -9,7 +9,7 @@ An interactive HPC hardware explorer built with React, Vinext, Three.js, and the
 - Browse **Hardware catalog** for 19 documented or preliminary platform entries, including Dell, HPE, Lenovo, Supermicro, NVIDIA, AMD and DDN.
 - Use **Build a rack** for 42U/48U layouts, equipment placement, planned connections, local saves, and JSON import/export.
 - Select **Power** to trace utility / generator sources through UPS, distribution, rack PSUs or NVL72 power shelves, and component regulators. Try battery operation or A/B feed failures, change the load, and inspect every stage.
-- The H100 reference cluster includes compute, front-end and storage topologies. Standalone hardware presets and NVL72 templates do not imply external fabric connections.
+- The H100 reference cluster includes compute, front-end and storage topologies. Other catalog presets now open with a switchable example fabric and a separate rack of supporting equipment. These connections are illustrative; turn off **Example fabrics** to view the original hardware alone. Custom rack links remain user-defined.
 
 ## Run locally
 

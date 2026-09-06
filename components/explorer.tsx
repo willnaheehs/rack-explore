@@ -59,6 +59,7 @@ import {
   type ModelContext,
 } from '@/lib/webmcp';
 import Topology from './topology';
+import { canShowFabricExample, withFabricExample } from '@/lib/fabric-examples';
 import PowerView from './power-view';
 import CatalogPanel from './catalog-panel';
 import RackBuilder from './rack-builder';
@@ -119,6 +120,7 @@ function HardwareIcon({
 
 export default function Explorer() {
   const [model, setModel] = useState<ClusterModel>(DEFAULT_MODEL);
+  const [baseModel, setBaseModel] = useState<ClusterModel>(DEFAULT_MODEL);
   const [catalog, setCatalog] = useState(false),
     [builder, setBuilder] = useState(false);
   const [draft, setDraft] = useState<ClusterModel>(blankModel),
@@ -190,12 +192,19 @@ export default function Explorer() {
     setCommand((c) => ({ type: 'fit', sequence: c.sequence + 1 }));
   }, []);
   const loadModel = (next: ClusterModel) => {
-    setModel(next);
+    const displayed = withFabricExample(next);
+    setBaseModel(next);
+    setModel(displayed);
     setPowerRackId(undefined);
     setSelected(null);
     setNode(null);
     setHovered(null);
-    setExpanded(next.racks.map((r) => r.id));
+    setExpanded(displayed.racks.map((r) => r.id));
+    setLayers({
+      compute: !!displayed.fabricExample,
+      frontend: false,
+      storage: false,
+    });
     setView('physical');
     setService(false);
     camera('fit');
@@ -286,8 +295,9 @@ export default function Explorer() {
           openPower(rackId);
         });
       },
-      showFabric: (fabric: Fabric) => {
+      showFabric: (fabric: Fabric, platform?: ClusterModel) => {
         flushSync(() => {
+          if (platform) loadModel(platform);
           setTopologyFabric(fabric);
           setView('topology');
         });
@@ -556,13 +566,13 @@ export default function Explorer() {
         <button
           className="brand"
           onClick={reset}
-          aria-label="Rack Explore cluster overview"
+          aria-label="Physical Compute cluster overview"
         >
           <span className="brand-mark">
             <Server size={22} />
           </span>
           <span>
-            rack<span className="brand-light">explore</span>
+            physical<span className="brand-light"> compute</span>
           </span>
           <span className="version">/ 02</span>
         </button>
@@ -672,6 +682,41 @@ export default function Explorer() {
           ))}
         </div>
         <div className="layers-panel">
+          {canShowFabricExample(baseModel) && (
+            <div className="example-fabric-control">
+              <label htmlFor="example-fabrics">
+                <span>Example fabrics</span>
+                <Switch
+                  id="example-fabrics"
+                  aria-label="Include example fabric equipment"
+                  checked={!!model.fabricExample}
+                  onCheckedChange={(enabled) => {
+                    const displayed = enabled
+                      ? withFabricExample(baseModel)
+                      : baseModel;
+                    setModel(displayed);
+                    setSelected(null);
+                    setNode(null);
+                    setPowerRackId(undefined);
+                    setPowerRevision((v) => v + 1);
+                    setExpanded(displayed.racks.map((r) => r.id));
+                    setLayers({
+                      compute: enabled,
+                      frontend: false,
+                      storage: false,
+                    });
+                    camera('fit');
+                  }}
+                />
+              </label>
+              <p>
+                {model.fabricExample
+                  ? 'Supporting switches and storage are illustrative.'
+                  : 'Hardware only. Enable to add connected example equipment.'}
+              </p>
+            </div>
+          )}
+
           <div className="section-label">
             <Layers3 size={15} />
             <span>FABRIC LAYERS</span>
@@ -755,7 +800,12 @@ export default function Explorer() {
             <SlidersHorizontal size={17} />
           </button>
           <span className="reference-badge">
-            <span /> {model.custom ? 'Custom layout' : 'Reference model'}
+            <span />{' '}
+            {model.custom
+              ? 'Custom layout'
+              : model.fabricExample
+                ? 'Example fabrics'
+                : 'Reference model'}
           </span>
         </div>
         <div className="stage">
@@ -873,7 +923,9 @@ export default function Explorer() {
                 <p>
                   {node
                     ? 'Select any module to inspect its role and specifications.'
-                    : 'Select a chassis. Open it. Follow the hardware.'}
+                    : model.fabricExample
+                      ? 'Example network equipment is included. Toggle fabric layers to trace its connections.'
+                      : 'Select a chassis. Open it. Follow the hardware.'}
                 </p>
               </div>
               <div className="assembly-controls">
@@ -995,7 +1047,7 @@ export default function Explorer() {
       <Dialog open={docs} onOpenChange={setDocs}>
         <DialogContent className="model-dialog">
           <DialogHeader>
-            <div className="eyebrow">RACK EXPLORE / MODEL NOTES</div>
+            <div className="eyebrow">PHYSICAL COMPUTE / MODEL NOTES</div>
             <DialogTitle>Real hardware. A transparent model.</DialogTitle>
             <DialogDescription>{MODEL_NOTE}</DialogDescription>
           </DialogHeader>
@@ -1017,6 +1069,14 @@ export default function Explorer() {
               are explicitly labeled representative. Small mechanical details
               and cabinet dimensions are illustrative. These are interactive
               explanatory models, not service CAD.
+            </p>
+            <h3>Fabric examples</h3>
+            <p>
+              Catalog presets include a switchable example network with compute,
+              front-end and storage paths. Its supporting equipment is shown in
+              a separate rack. Port allocations and adapter configurations are
+              illustrative, and the internal NVLink or xGMI domain remains
+              separate from the external network.
             </p>
             <h3>Custom racks</h3>
             <p>

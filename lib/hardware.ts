@@ -222,6 +222,13 @@ export type ClusterModel = {
   hardware: Hardware[];
   links: Link[];
   custom?: boolean;
+  fabricExample?: {
+    baseHardwareIds: string[];
+    roles: Record<string, string>;
+    computeTransport: string;
+    computeRate: number;
+    note: string;
+  };
 };
 export function childrenOf(node: Hardware): Hardware[] {
   if (node.parent) return [];
@@ -368,3 +375,24 @@ export const DEFAULT_MODEL: ClusterModel = {
   hardware: HARDWARE,
   links: LINKS,
 };
+
+export function fabricInfo(model: ClusterModel, fabric: Fabric) {
+  const base = FABRICS[fabric],
+    example = model.fabricExample;
+  if (!example) return base;
+  return {
+    ...base,
+    speed:
+      fabric === 'compute'
+        ? `${example.computeRate} Gb/s ${example.computeTransport}`
+        : fabric === 'frontend'
+          ? '100 GbE'
+          : `400 / 200 Gb/s ${example.computeTransport}`,
+    description:
+      fabric === 'compute'
+        ? `Illustrative ${example.computeTransport} compute links through two leaf and two spine switches.`
+        : fabric === 'frontend'
+          ? 'Illustrative Ethernet access and provisioning paths. The port allocation depends on the selected hardware.'
+          : `Illustrative ${example.computeTransport} paths between compute endpoints and shared flash storage.`,
+  };
+}

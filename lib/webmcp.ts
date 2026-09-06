@@ -1,5 +1,8 @@
+import { modelForProfile } from './rack-builder.ts';
+import { VISIBLE_CATALOG } from './catalog.ts';
 import {
   FABRICS,
+  fabricInfo,
   resolveHardware,
   specsFor,
   linksFor,
@@ -18,7 +21,10 @@ export type ExplorerActions = {
   read: () => ExplorerState;
   inspect: (id: string) => void;
   showPower?: (rackId: string) => void;
-  showFabric: (fabric: 'compute' | 'frontend' | 'storage') => void;
+  showFabric: (
+    fabric: 'compute' | 'frontend' | 'storage',
+    platform?: ClusterModel,
+  ) => void;
 };
 type Tool = {
   name: string;
@@ -62,6 +68,15 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
           throw new Error('No arguments expected.');
         return {
           state: snapshot(),
+          fabricExample: actions.read().model.fabricExample ?? null,
+          availablePlatforms: VISIBLE_CATALOG.filter(
+            (p) => p.status === 'Documented',
+          ).map((p) => ({ id: p.id, name: `${p.maker} ${p.name}` })),
+          fabricConnections: Object.keys(FABRICS).map((fabric) => ({
+            fabric,
+            links: actions.read().model.links.filter((l) => l.fabric === fabric)
+              .length,
+          })),
           hardware: actions
             .read()
             .model.hardware.map(({ id, name, model, rack, u, height }) => ({
@@ -104,6 +119,15 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
         actions.inspect(h.id);
         return {
           state: snapshot(),
+          fabricExample: actions.read().model.fabricExample ?? null,
+          availablePlatforms: VISIBLE_CATALOG.filter(
+            (p) => p.status === 'Documented',
+          ).map((p) => ({ id: p.id, name: `${p.maker} ${p.name}` })),
+          fabricConnections: Object.keys(FABRICS).map((fabric) => ({
+            fabric,
+            links: actions.read().model.links.filter((l) => l.fabric === fabric)
+              .length,
+          })),
           hardware: h,
           specifications: specsFor(h),
           connections: linksFor(h, actions.read().model),
@@ -115,11 +139,12 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
       name: 'show_cluster_fabric',
       title: 'Show network fabric',
       description:
-        'Open the compute, front-end Ethernet, or storage topology in the visible workspace.',
+        'Open the compute, front-end Ethernet, or storage topology. Optionally load a documented platform from get_cluster_model.availablePlatforms with its labeled example fabric equipment.',
       inputSchema: {
         type: 'object',
         properties: {
           fabric: { type: 'string', enum: ['compute', 'frontend', 'storage'] },
+          platformId: { type: 'string' },
         },
         required: ['fabric'],
         additionalProperties: false,
@@ -128,13 +153,31 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
       execute(input) {
         const values = objectInput(input);
         if (
-          Object.keys(values).some((k) => k !== 'fabric') ||
+          Object.keys(values).some(
+            (k) => k !== 'fabric' && k !== 'platformId',
+          ) ||
           !['compute', 'frontend', 'storage'].includes(String(values.fabric))
         )
           throw new Error('Fabric must be compute, frontend, or storage.');
         const fabric = values.fabric as keyof typeof FABRICS;
-        actions.showFabric(fabric);
-        return { state: snapshot(), fabric: FABRICS[fabric] };
+        if (
+          values.platformId !== undefined &&
+          !VISIBLE_CATALOG.some(
+            (p) => p.id === values.platformId && p.status === 'Documented',
+          )
+        )
+          throw new Error(
+            'Choose a documented platform ID from get_cluster_model.',
+          );
+        const platform =
+          typeof values.platformId === 'string'
+            ? modelForProfile(values.platformId)
+            : undefined;
+        actions.showFabric(fabric, platform);
+        return {
+          state: snapshot(),
+          fabric: fabricInfo(actions.read().model, fabric),
+        };
       },
     },
     ...(actions.showPower
