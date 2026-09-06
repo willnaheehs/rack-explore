@@ -1,4 +1,5 @@
 import { profileFor, partFor, type Reference } from './catalog.ts';
+import type { FabricReferences } from './fabric-references.ts';
 export type Fabric = 'compute' | 'frontend' | 'storage';
 export type HardwareKind =
   | 'dgx'
@@ -222,13 +223,7 @@ export type ClusterModel = {
   hardware: Hardware[];
   links: Link[];
   custom?: boolean;
-  fabricExample?: {
-    baseHardwareIds: string[];
-    roles: Record<string, string>;
-    computeTransport: string;
-    computeRate: number;
-    note: string;
-  };
+  fabricReferences?: FabricReferences;
 };
 export function childrenOf(node: Hardware): Hardware[] {
   if (node.parent) return [];
@@ -378,21 +373,11 @@ export const DEFAULT_MODEL: ClusterModel = {
 
 export function fabricInfo(model: ClusterModel, fabric: Fabric) {
   const base = FABRICS[fabric],
-    example = model.fabricExample;
-  if (!example) return base;
+    reference = model.fabricReferences?.[fabric];
+  if (!reference) return base;
   return {
     ...base,
-    speed:
-      fabric === 'compute'
-        ? `${example.computeRate} Gb/s ${example.computeTransport}`
-        : fabric === 'frontend'
-          ? '100 GbE'
-          : `400 / 200 Gb/s ${example.computeTransport}`,
-    description:
-      fabric === 'compute'
-        ? `Illustrative ${example.computeTransport} compute links through two leaf and two spine switches.`
-        : fabric === 'frontend'
-          ? 'Illustrative Ethernet access and provisioning paths. The port allocation depends on the selected hardware.'
-          : `Illustrative ${example.computeTransport} paths between compute endpoints and shared flash storage.`,
+    speed: reference.speed,
+    description: reference.summary,
   };
 }

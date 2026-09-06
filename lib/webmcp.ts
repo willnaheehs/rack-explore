@@ -50,6 +50,25 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
     const { model, ...state } = actions.read();
     return { ...state, model: { id: model.id, title: model.title } };
   };
+  const referenceSummary = () =>
+    Object.fromEntries(
+      Object.entries(actions.read().model.fabricReferences ?? {}).map(
+        ([fabric, p]) => [
+          fabric,
+          {
+            id: p.id,
+            title: p.title,
+            status: p.status,
+            scope: p.scope,
+            speed: p.speed,
+            sharedWith: p.sharedWith,
+            sources: p.sources,
+            documentedLinkGroups: p.connections.filter((c) => c.kind === 'link')
+              .length,
+          },
+        ],
+      ),
+    );
   return [
     {
       name: 'get_cluster_model',
@@ -68,7 +87,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
           throw new Error('No arguments expected.');
         return {
           state: snapshot(),
-          fabricExample: actions.read().model.fabricExample ?? null,
+          fabricReferences: referenceSummary(),
           availablePlatforms: VISIBLE_CATALOG.filter(
             (p) => p.status === 'Documented',
           ).map((p) => ({ id: p.id, name: `${p.maker} ${p.name}` })),
@@ -76,6 +95,10 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
             fabric,
             links: actions.read().model.links.filter((l) => l.fabric === fabric)
               .length,
+            referenceStatus:
+              actions.read().model.fabricReferences?.[
+                fabric as keyof typeof FABRICS
+              ]?.status ?? null,
           })),
           hardware: actions
             .read()
@@ -119,7 +142,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
         actions.inspect(h.id);
         return {
           state: snapshot(),
-          fabricExample: actions.read().model.fabricExample ?? null,
+          fabricReferences: referenceSummary(),
           availablePlatforms: VISIBLE_CATALOG.filter(
             (p) => p.status === 'Documented',
           ).map((p) => ({ id: p.id, name: `${p.maker} ${p.name}` })),
@@ -127,6 +150,10 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
             fabric,
             links: actions.read().model.links.filter((l) => l.fabric === fabric)
               .length,
+            referenceStatus:
+              actions.read().model.fabricReferences?.[
+                fabric as keyof typeof FABRICS
+              ]?.status ?? null,
           })),
           hardware: h,
           specifications: specsFor(h),
@@ -139,7 +166,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
       name: 'show_cluster_fabric',
       title: 'Show network fabric',
       description:
-        'Open the compute, front-end Ethernet, or storage topology. Optionally load a documented platform from get_cluster_model.availablePlatforms with its labeled example fabric equipment.',
+        'Open the compute, front-end Ethernet, or storage topology. Optionally load a documented platform from get_cluster_model.availablePlatforms with its sourced reference connection plans. Interface-only plans explicitly report missing wiring details.',
       inputSchema: {
         type: 'object',
         properties: {
@@ -177,6 +204,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
         return {
           state: snapshot(),
           fabric: fabricInfo(actions.read().model, fabric),
+          reference: actions.read().model.fabricReferences?.[fabric] ?? null,
         };
       },
     },

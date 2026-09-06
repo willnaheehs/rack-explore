@@ -2923,3 +2923,349 @@ button:disabled {
     display: none;
   }
 }
+.reference-topology {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  padding-top: 18px;
+}
+.reference-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+.reference-heading h1 {
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 500;
+  margin: 8px 0;
+  letter-spacing: -0.5px;
+}
+.reference-heading p,
+.reference-summary {
+  color: #9ab0bb;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+.reference-status {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: var(--reference-color);
+  font-size: 12px;
+}
+.reference-status span {
+  color: #7f99a6;
+  margin-left: 7px;
+}
+.reference-speed {
+  font:
+    13px/1.5 var(--font-geist-mono),
+    monospace;
+  color: var(--reference-color);
+  max-width: 200px;
+  text-align: right;
+  padding-top: 24px;
+}
+.reference-shared {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: #263646;
+  border: 1px solid #405263;
+  border-radius: 5px;
+  font-size: 13px;
+  color: #b8cadd;
+  margin-bottom: 12px;
+}
+.reference-shared svg {
+  flex-shrink: 0;
+}
+.reference-workspace {
+  display: flex;
+  flex: 1;
+  min-height: 240px;
+  overflow: hidden;
+  border: 1px solid #364b57;
+  border-radius: 7px;
+  background: #172229;
+}
+.reference-diagram-scroll {
+  overflow: auto;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #46616d transparent;
+  background: radial-gradient(#314149 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+.reference-diagram {
+  position: relative;
+}
+.reference-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-height: 66px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  background: #222f37;
+  color: #d7e5ec;
+  border: 1px solid #47606c;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+  box-shadow: 0 5px 18px #0b141a60;
+}
+.reference-node span {
+  font-size: 14px;
+  line-height: 1.2;
+}
+.reference-node small {
+  color: #91aab7;
+  font-size: 12px;
+  line-height: 1.25;
+}
+.reference-node.related {
+  border-color: var(--reference-color);
+}
+.reference-node.selected,
+.reference-node:hover {
+  background: #314238;
+  border-color: var(--reference-color);
+}
+.reference-node:focus-visible {
+  outline: 2px solid var(--reference-color);
+  outline-offset: 3px;
+}
+.reference-edge-hit {
+  cursor: pointer;
+}
+.reference-edge-hit:focus {
+  outline: none;
+  stroke: #dcecf244;
+}
+.reference-inspector {
+  width: 280px;
+  flex-shrink: 0;
+  padding: 18px;
+  border-left: 1px solid #364b57;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.reference-detail-label {
+  color: var(--reference-color);
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.reference-inspector h2 {
+  font-size: 17px;
+  line-height: 1.35;
+  margin: 12px 0 8px;
+  font-weight: 500;
+}
+.reference-inspector p {
+  color: #9fb4bf;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.reference-inspector dl {
+  margin: 16px 0;
+}
+.reference-inspector dt {
+  color: #819ca9;
+  font-size: 12px;
+  margin: 12px 0 3px;
+}
+.reference-inspector dd {
+  color: #cfdee5;
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.reference-inspector h3 {
+  margin: 22px 0 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9fb7c2;
+}
+.reference-source {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: #b4d4e4;
+  text-decoration: none;
+  font-size: 13px;
+  padding: 10px 0;
+  border-top: 1px solid #344852;
+}
+.reference-source small {
+  display: block;
+  color: #819daa;
+  font-size: 12px;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+.reference-source svg {
+  flex-shrink: 0;
+}
+.reference-source:hover {
+  color: #e9f6fa;
+}
+.reference-connection-button,
+.reference-inspect-hardware {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px;
+  margin-top: 8px;
+  color: #c7dbe6;
+  background: #253740;
+  border: 1px solid #405864;
+  border-radius: 5px;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.reference-connection-button small {
+  display: block;
+  width: 100%;
+  color: #8dabb9;
+  font-size: 12px;
+}
+.reference-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+  color: #99afba;
+  font-size: 12px;
+}
+.reference-footer > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.reference-footer i {
+  width: 22px;
+  border-top: 2px solid var(--reference-color);
+}
+.reference-footer i.dashed {
+  border-top-style: dashed;
+  margin-left: 8px;
+}
+.reference-limits {
+  color: #90a9b5;
+  font-size: 13px;
+  max-height: 130px;
+  overflow: auto;
+}
+.reference-limits summary {
+  cursor: pointer;
+  padding: 5px 0;
+}
+.reference-limits p {
+  line-height: 1.5;
+  margin: 6px 0;
+}
+.reference-sidebar-note {
+  margin: 0 0 16px;
+  color: #a7bfcd;
+}
+.reference-sidebar-note strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.reference-sidebar-note p {
+  color: #7e9aa9;
+  font-size: 12px;
+  line-height: 1.5;
+  margin-top: 6px;
+}
+.reference-fabric-button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #adbfcb;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+}
+.reference-fabric-button > span:nth-child(2) {
+  flex: 1;
+}
+.reference-fabric-button small {
+  display: block;
+  color: #7895a5;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.reference-fabric-button.active {
+  color: #e4f1f8;
+}
+@media (max-width: 1250px) {
+  .reference-workspace {
+    flex-direction: column;
+  }
+  .reference-diagram-scroll {
+    min-height: 240px;
+  }
+  .reference-inspector {
+    border-left: 0;
+    border-top: 1px solid #364b57;
+    width: auto;
+    max-height: 230px;
+  }
+}
+@media (max-width: 650px) {
+  .reference-topology {
+    overflow: auto;
+  }
+  .reference-heading {
+    display: block;
+  }
+  .reference-heading h1 {
+    font-size: 20px;
+  }
+  .reference-speed {
+    display: block;
+    text-align: left;
+    padding: 0 0 10px;
+    max-width: none;
+  }
+  .reference-status span {
+    margin-left: 0;
+  }
+  .reference-workspace {
+    flex: none;
+    height: 520px;
+  }
+  .reference-inspector {
+    max-height: 230px;
+  }
+  .reference-shared {
+    font-size: 12px;
+  }
+  .reference-footer {
+    flex-wrap: wrap;
+  }
+}

@@ -59,7 +59,7 @@ import {
   type ModelContext,
 } from '@/lib/webmcp';
 import Topology from './topology';
-import { canShowFabricExample, withFabricExample } from '@/lib/fabric-examples';
+import { withReferenceFabrics } from '@/lib/fabric-references';
 import PowerView from './power-view';
 import CatalogPanel from './catalog-panel';
 import RackBuilder from './rack-builder';
@@ -119,8 +119,9 @@ function HardwareIcon({
 }
 
 export default function Explorer() {
-  const [model, setModel] = useState<ClusterModel>(DEFAULT_MODEL);
-  const [baseModel, setBaseModel] = useState<ClusterModel>(DEFAULT_MODEL);
+  const [model, setModel] = useState<ClusterModel>(() =>
+    withReferenceFabrics(DEFAULT_MODEL),
+  );
   const [catalog, setCatalog] = useState(false),
     [builder, setBuilder] = useState(false);
   const [draft, setDraft] = useState<ClusterModel>(blankModel),
@@ -192,8 +193,7 @@ export default function Explorer() {
     setCommand((c) => ({ type: 'fit', sequence: c.sequence + 1 }));
   }, []);
   const loadModel = (next: ClusterModel) => {
-    const displayed = withFabricExample(next);
-    setBaseModel(next);
+    const displayed = withReferenceFabrics(next);
     setModel(displayed);
     setPowerRackId(undefined);
     setSelected(null);
@@ -201,7 +201,7 @@ export default function Explorer() {
     setHovered(null);
     setExpanded(displayed.racks.map((r) => r.id));
     setLayers({
-      compute: !!displayed.fabricExample,
+      compute: false,
       frontend: false,
       storage: false,
     });
@@ -513,10 +513,8 @@ export default function Explorer() {
                 <div>
                   <span>{f.name}</span>
                   <small>
-                    {model.links
-                      .filter((l) => l.fabric === key)
-                      .reduce((n, l) => n + l.count, 0)}{' '}
-                    modeled logical links
+                    {model.fabricReferences?.[key as Fabric]?.status ??
+                      `${model.links.filter((l) => l.fabric === key).reduce((n, l) => n + l.count, 0)} planned links`}
                   </small>
                 </div>
                 <ArrowUpRight size={15} />
@@ -682,37 +680,12 @@ export default function Explorer() {
           ))}
         </div>
         <div className="layers-panel">
-          {canShowFabricExample(baseModel) && (
-            <div className="example-fabric-control">
-              <label htmlFor="example-fabrics">
-                <span>Example fabrics</span>
-                <Switch
-                  id="example-fabrics"
-                  aria-label="Include example fabric equipment"
-                  checked={!!model.fabricExample}
-                  onCheckedChange={(enabled) => {
-                    const displayed = enabled
-                      ? withFabricExample(baseModel)
-                      : baseModel;
-                    setModel(displayed);
-                    setSelected(null);
-                    setNode(null);
-                    setPowerRackId(undefined);
-                    setPowerRevision((v) => v + 1);
-                    setExpanded(displayed.racks.map((r) => r.id));
-                    setLayers({
-                      compute: enabled,
-                      frontend: false,
-                      storage: false,
-                    });
-                    camera('fit');
-                  }}
-                />
-              </label>
+          {model.fabricReferences && (
+            <div className="reference-sidebar-note">
+              <strong>Sourced connection plans</strong>
               <p>
-                {model.fabricExample
-                  ? 'Supporting switches and storage are illustrative.'
-                  : 'Hardware only. Enable to add connected example equipment.'}
+                Open a fabric to inspect its documented ports, topology and
+                sources.
               </p>
             </div>
           )}
@@ -721,22 +694,53 @@ export default function Explorer() {
             <Layers3 size={15} />
             <span>FABRIC LAYERS</span>
           </div>
-          {Object.entries(FABRICS).map(([key, f]) => (
-            <label key={key} htmlFor={`layer-${key}`} className="layer-control">
-              <ColorDot color={f.color} />
-              <span>{f.name}</span>
-              <Switch
-                id={`layer-${key}`}
-                aria-label={`Show ${f.name}`}
-                checked={layers[key as Fabric]}
-                onCheckedChange={(checked) =>
-                  setLayers((old) => ({ ...old, [key]: checked }))
-                }
-              />
-            </label>
-          ))}
+          {model.fabricReferences ? (
+            Object.entries(FABRICS).map(([key, f]) => (
+              <button
+                className={`reference-fabric-button ${view === 'topology' && topologyFabric === key ? 'active' : ''}`}
+                key={key}
+                onClick={() => {
+                  setTopologyFabric(key as Fabric);
+                  setView('topology');
+                }}
+              >
+                <ColorDot color={f.color} />
+                <span>
+                  {f.name}
+                  <small>
+                    {model.fabricReferences?.[key as Fabric].status}
+                  </small>
+                </span>
+                <ArrowUpRight size={14} />
+              </button>
+            ))
+          ) : (
+            <>
+              {' '}
+              {Object.entries(FABRICS).map(([key, f]) => (
+                <label
+                  key={key}
+                  htmlFor={`layer-${key}`}
+                  className="layer-control"
+                >
+                  <ColorDot color={f.color} />
+                  <span>{f.name}</span>
+                  <Switch
+                    id={`layer-${key}`}
+                    aria-label={`Show ${f.name}`}
+                    checked={layers[key as Fabric]}
+                    onCheckedChange={(checked) =>
+                      setLayers((old) => ({ ...old, [key]: checked }))
+                    }
+                  />
+                </label>
+              ))}
+            </>
+          )}
           <div className="layer-note">
-            Physical view · illustrative cable paths
+            {model.fabricReferences
+              ? 'Connection plans in Topology'
+              : 'Physical view · planned cable paths'}
           </div>
           <label htmlFor="rack-labels" className="label-control">
             <span>Rack labels</span>
@@ -803,8 +807,8 @@ export default function Explorer() {
             <span />{' '}
             {model.custom
               ? 'Custom layout'
-              : model.fabricExample
-                ? 'Example fabrics'
+              : model.fabricReferences
+                ? 'Sourced fabrics'
                 : 'Reference model'}
           </span>
         </div>
@@ -923,8 +927,8 @@ export default function Explorer() {
                 <p>
                   {node
                     ? 'Select any module to inspect its role and specifications.'
-                    : model.fabricExample
-                      ? 'Example network equipment is included. Toggle fabric layers to trace its connections.'
+                    : model.fabricReferences
+                      ? 'Inspect a chassis, or open a fabric to follow its documented connection plan.'
                       : 'Select a chassis. Open it. Follow the hardware.'}
                 </p>
               </div>
@@ -1070,13 +1074,15 @@ export default function Explorer() {
               and cabinet dimensions are illustrative. These are interactive
               explanatory models, not service CAD.
             </p>
-            <h3>Fabric examples</h3>
+            <h3>Fabric references</h3>
             <p>
-              Catalog presets include a switchable example network with compute,
-              front-end and storage paths. Its supporting equipment is shown in
-              a separate rack. Port allocations and adapter configurations are
-              illustrative, and the internal NVLink or xGMI domain remains
-              separate from the external network.
+              Topology views follow the named vendor reference design, with
+              evidence on each connection. Solid lines describe documented link
+              groups; dashed lines describe relationships or interface
+              capabilities. Network role blocks do not add unverified equipment
+              or cable routes to the physical inventory. Shared storage and
+              front-end paths refer to the same physical network. Custom
+              connections remain user-defined.
             </p>
             <h3>Custom racks</h3>
             <p>
@@ -1196,6 +1202,31 @@ function Connections({
 }) {
   const resolveHardware = (id: string | null) => lookupHardware(id, model);
   const links = linksFor(h, model);
+  if (model.fabricReferences)
+    return (
+      <div className="connections-panel">
+        <p className="connection-note">
+          Connection plans describe the named vendor configuration. Inspect a
+          fabric for ports, network roles and source evidence.
+        </p>
+        {Object.entries(model.fabricReferences).map(([fabric, reference]) => (
+          <button
+            key={fabric}
+            className="connection-row"
+            onClick={() => onView(fabric as Fabric)}
+          >
+            <ColorDot color={FABRICS[fabric as Fabric].color} />
+            <div>
+              <strong>{FABRICS[fabric as Fabric].name}</strong>
+              <small>
+                {reference.speed} · {reference.status}
+              </small>
+            </div>
+            <ArrowUpRight size={14} />
+          </button>
+        ))}
+      </div>
+    );
   return (
     <div className="connections-panel">
       {h.parent && (

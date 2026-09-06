@@ -461,14 +461,29 @@ const dell = compute({
     cpuPart('Intel Xeon 6 series', 'Up to 86 / socket'),
     memoryPart(32, 'Configuration dependent'),
     nvs(2, 'NVLink 5'),
-    nicPart(4, 'PCIe Gen 5 expansion slot', 'Adapter dependent'),
+    nicPart(8, 'ConnectX-8', '800 Gb/s adapter capability'),
+    part(
+      'dpu',
+      'nic',
+      'Reference I/O DPU',
+      1,
+      'BlueField-3 B3240',
+      'Dell AI Factory reference option; two 400 GbE ports for front-end and storage.',
+      [spec('Ports', '2 × 400 GbE')],
+    ),
     drivePart(16, 'E3.S'),
     motherboard,
     baseboard,
     backplane,
     fanPart(20),
   ],
-  sources: [reference('Dell XE9780 system overview', urls.dell)],
+  sources: [
+    reference('Dell XE9780 system overview', urls.dell),
+    reference(
+      'Dell XE9780 reference networking',
+      'https://infohub.delltechnologies.com/en-uk/l/dell-ai-factory-with-nvidia-including-nvidia-gpus-and-spectrum-4-switches-with-dell-sonic/gpu-worker-node-configuration-27/2/',
+    ),
+  ],
 });
 const hpe = compute({
   id: 'hpe-xd685',
@@ -509,6 +524,15 @@ const hpe = compute({
     cpuPart('AMD EPYC 9005 family'),
     memoryPart(24, 'Up to 3 TB'),
     nicPart(8, 'GPU-attached PCIe Gen 5 slot', 'Adapter dependent'),
+    part(
+      'io',
+      'nic',
+      'Host expansion slots',
+      4,
+      'PCIe x16 host slot',
+      'Fabric, NIC or DPU expansion positions; these are not populated adapters.',
+      [spec('Population', '4 available slots')],
+    ),
     drivePart(8, 'EDSFF'),
     bootPart('480 or 960 GB'),
     motherboard,
@@ -555,13 +579,28 @@ const lenovo = compute({
     memoryPart(32, 'Up to 4 TB'),
     nvs(2, 'NVLink 5'),
     nicPart(8, 'ConnectX-8', '800 Gb/s'),
+    part(
+      'dpu',
+      'nic',
+      'Reference I/O DPU',
+      1,
+      'BlueField-3 B3240',
+      'Hybrid AI 289-800 reference configuration; slot 2.',
+      [spec('Ports', '2 × 400 GbE')],
+    ),
     drivePart(8, '2.5-inch Gen 5'),
     bootPart('Configuration dependent'),
     motherboard,
     baseboard,
     backplane,
   ],
-  sources: [reference('SR680a V4 product guide · August 2026', urls.lenovo)],
+  sources: [
+    reference('SR680a V4 product guide · August 2026', urls.lenovo),
+    reference(
+      'Lenovo Hybrid AI 289 networking',
+      'https://lenovopress.lenovo.com/lp2286-lenovo-hybrid-ai-289-platform-guide',
+    ),
+  ],
 });
 const sm350 = compute({
   id: 'sm-mi350x',
@@ -592,7 +631,7 @@ const sm350 = compute({
     ),
     cpuPart('AMD EPYC 9004 / 9005 family'),
     memoryPart(24, 'Up to 6 TB'),
-    nicPart(8, 'Low-profile PCIe Gen 5 slot', 'Adapter dependent'),
+    nicPart(8, 'AMD Pensando Pollara 400 · reference option', '400 GbE'),
     drivePart(8, '2.5-inch'),
     part(
       'sata',
@@ -611,6 +650,10 @@ const sm350 = compute({
   ],
   sources: [
     reference('AS-8126GS-TNMR specification', urls.sm350),
+    reference(
+      'Supermicro AMD / Pollara reference configuration',
+      'https://www.supermicro.com/solutions/validated-design/AMD-Instinct-MI325X-Pensando-Pollara-GPU-Cluster.pdf',
+    ),
     reference('AMD accelerator specifications', urls.amd),
   ],
 });
@@ -646,6 +689,10 @@ const sm355 = compute({
   ],
   sources: [
     reference('AS-4126GS-NMR-LCC specification', urls.sm355),
+    reference(
+      'Supermicro AMD / Pollara reference configuration',
+      'https://www.supermicro.com/solutions/validated-design/AMD-Instinct-MI325X-Pensando-Pollara-GPU-Cluster.pdf',
+    ),
     reference('AMD accelerator specifications', urls.amd),
   ],
 });
@@ -665,9 +712,10 @@ const sm300 = compute({
   parts: [
     b300.parts[0],
     ...sm355.parts.filter(
-      (p) => !['gpu', 'nvme', 'board', 'backplane'].includes(p.key),
+      (p) => !['gpu', 'nic', 'nvme', 'board', 'backplane'].includes(p.key),
     ),
     nvs(2, 'NVLink 5'),
+    nicPart(8, 'ConnectX-8', 'Up to 800 Gb/s'),
     drivePart(8, 'E1.S'),
     { ...motherboard, model: 'Supermicro H14DSG-OM' },
     backplane,

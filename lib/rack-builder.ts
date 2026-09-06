@@ -207,7 +207,7 @@ export function cloneForBuilder(model: ClusterModel): ClusterModel {
     );
   return {
     ...structuredClone(model),
-    fabricExample: undefined,
+    fabricReferences: undefined,
     id: 'custom',
     custom: true,
     title: `${model.title} · custom`,
