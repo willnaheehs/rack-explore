@@ -58,10 +58,11 @@ export function powerTools(actions: {
       name: 'configure_power_path',
       title: 'Explore power scenario',
       description:
-        'Change the visible power scenario, load budget, scope, rack, device, or selected stage. All changes are local educational scenarios; this never controls real equipment.',
+        'Change the visible physical or schematic power presentation, scenario, load budget, scope, rack, device, or selected stage. All changes are local educational scenarios; this never controls real equipment.',
       inputSchema: {
         type: 'object',
         properties: {
+          presentation: { type: 'string', enum: ['physical', 'schematic'] },
           scenario: {
             type: 'string',
             enum: [

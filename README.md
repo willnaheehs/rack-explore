@@ -41,6 +41,8 @@ Custom rack validation checks U bounds, collisions, mounting family, unique devi
 
 ## Power model
 
+Power opens in a physical rear rack view. Orbit, zoom, focus a selected part, or switch to the schematic. Select equipment directly in 3D or use the named stage buttons. Physical facility equipment, rear PDUs / shelves, and a board cutaway share the same source/failure state. Only the selected stage’s upstream routes are shown; unavailable paths are dimmed and animation respects reduced motion. If WebGL is unavailable, the schematic remains usable.
+
 The three scales share one scenario: source and facility, rack distribution, and inside hardware. A/B flow, balanced three-phase current, conversion losses, battery runtime and board allocations respond to the load budget. Component groups link back to the physical inspector, including storage drives and controllers. An empty custom rack remains explorable without inventing devices.
 
 DGX H100/H200, B200 and B300 input budgets use NVIDIA references. NVL72 shelf topology uses the DGX rack guide, including its nominal 50–51 V DC bus. GB200 tray power is allocated from an approximate 120 kW rack budget; GB300 uses an explicit 142 kW planning scenario. Other chassis use labeled editable allowances. Shelf nameplates are never counted again as IT loads.
@@ -55,6 +57,7 @@ Facility voltages, equal feed sharing, usable feed current, efficiencies, batter
 - `components/cluster-scene.tsx`: scaled enclosure geometry, component assemblies, picking and camera controls. Static geometry is merged per device/material to reduce draw calls.
 - `components/topology.tsx`: accessible selectable SVG network diagrams.
 - `components/explorer.tsx`, `catalog-panel.tsx`, `rack-builder.tsx`: workstation and workflows.
+- `lib/power-physical.ts`, `components/power-scene.tsx`: physical equipment layouts, U placement, selectable 3D parts, cable routes, focus controls and resource cleanup.
 - `lib/power.ts`, `components/power-view.tsx`, `app/power.css`: power calculations, stage graphs, scenarios and stage inspection.
 - `lib/webmcp.ts`, `lib/power-tools.ts`: optional page-scoped hardware and power tools with input validation and abort cleanup.
 - `tests/*.test.mjs`: hardware populations, placement/import safety, link budgets, power conservation, source/failure routing, empty/zero-load cases and structured tool actions.

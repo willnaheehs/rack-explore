@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { flushSync } from 'react-dom';
 import {
+  Box,
   Zap,
   Factory,
   UtilityPole,
@@ -37,6 +38,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import { Choice } from './catalog-panel';
+import PowerScene from './power-scene';
 import { type ClusterModel } from '@/lib/hardware';
 import { type ModelContext } from '@/lib/webmcp';
 import { powerTools } from '@/lib/power-tools';
@@ -84,8 +86,8 @@ function PowerIcon({ kind, size = 20 }: { kind: string; size?: number }) {
   return <Icon size={size} />;
 }
 const scopeFirst: Record<PowerScope, string> = {
-  facility: 'utility',
-  rack: 'feed-a',
+  facility: 'rack',
+  rack: 'device',
   board: 'board-input',
 };
 function NodeSchematic({ kind }: { kind: string }) {
@@ -418,16 +420,41 @@ export default function PowerView({
   const allKnown = c.budgets.every((b) => b.documented && !b.override);
   return (
     <section className="power-workspace" aria-label="Interactive power path">
-      <div className="power-main">
+      <div
+        className={`power-main ${s.presentation === 'physical' ? 'power-main-physical' : ''}`}
+      >
         <header className="power-title">
           <div>
             <div className="eyebrow">
               <Zap size={13} /> POWER EXPLORER
             </div>
-            <h1>Follow the energy.</h1>
-            <p>From the source to the component. One path, at three scales.</p>
+            <h1>
+              {s.presentation === 'physical'
+                ? 'Power, in place.'
+                : 'Follow the energy.'}
+            </h1>
+            {s.presentation === 'schematic' && (
+              <p>
+                From the source to the component. One path, at three scales.
+              </p>
+            )}
           </div>
-          <span className="power-model-badge">EXPLANATORY MODEL</span>
+          <Tabs
+            value={s.presentation}
+            onValueChange={(value) =>
+              patch({ presentation: value as PowerSettings['presentation'] })
+            }
+            className="power-presentation"
+          >
+            <TabsList>
+              <TabsTrigger value="physical">
+                <Box size={15} /> Physical
+              </TabsTrigger>
+              <TabsTrigger value="schematic">
+                <Workflow size={15} /> Schematic
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </header>
         <div className="power-targets">
           <label htmlFor="power-rack">
@@ -436,7 +463,14 @@ export default function PowerView({
               id="power-rack"
               label="Power target rack"
               value={s.rackId}
-              onChange={(id) => setSettings(initialPowerSettings(model, id))}
+              onChange={(id) =>
+                setSettings({
+                  ...initialPowerSettings(model, id),
+                  presentation: s.presentation,
+                  scope: s.scope,
+                  stageId: scopeFirst[s.scope],
+                })
+              }
               options={model.racks.map((r) => ({
                 value: r.id,
                 label: `${r.id} · ${r.name}`,
@@ -746,16 +780,47 @@ export default function PowerView({
           </div>
         </div>
         <div className="power-graph-heading">
-          <h2>{graph.title}</h2>
-          <p>{graph.description}</p>
+          <h2>
+            {s.presentation === 'physical'
+              ? s.scope === 'facility'
+                ? 'Source & backup equipment'
+                : s.scope === 'rack'
+                  ? 'A/B feeds into the rack'
+                  : 'From the inlet to the silicon'
+              : graph.title}
+          </h2>
+          {s.presentation === 'schematic' && <p>{graph.description}</p>}
+          {s.presentation === 'physical' && (
+            <span className="physical-power-status">
+              {c.on ? 'Energized paths' : 'Rack power unavailable'}
+            </span>
+          )}
         </div>
-        <Diagram
-          key={s.scope}
-          {...graph}
-          selected={stage?.id ?? ''}
-          onSelect={selectStage}
-          motion={motion && c.sourceKW > 0}
-        />
+        {s.presentation === 'physical' ? (
+          <PowerScene
+            model={model}
+            settings={s}
+            selected={stage?.id ?? ''}
+            motion={motion && c.sourceKW > 0}
+            onSelect={(stageId, hardwareId) =>
+              patch({
+                stageId,
+                ...(hardwareId && hardwareId !== s.hardwareId
+                  ? { hardwareId, deviceBudgetKW: null }
+                  : {}),
+              })
+            }
+            onUnavailable={() => patch({ presentation: 'schematic' })}
+          />
+        ) : (
+          <Diagram
+            key={s.scope}
+            {...graph}
+            selected={stage?.id ?? ''}
+            onSelect={selectStage}
+            motion={motion && c.sourceKW > 0}
+          />
+        )}
         <div className="power-stage-strip" aria-label="Power stages">
           {graph.nodes.map((n, i) => (
             <button

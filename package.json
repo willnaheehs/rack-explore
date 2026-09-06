@@ -9,7 +9,7 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
-    "lint": "oxlint app lib components/explorer.tsx components/cluster-scene.tsx components/topology.tsx components/catalog-panel.tsx components/rack-builder.tsx components/power-view.tsx",
+    "lint": "oxlint app lib components/explorer.tsx components/cluster-scene.tsx components/topology.tsx components/catalog-panel.tsx components/rack-builder.tsx components/power-view.tsx components/power-scene.tsx",
     "format": "oxfmt",
     "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },

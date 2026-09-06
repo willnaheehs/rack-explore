@@ -14,6 +14,7 @@ export type PowerScenario =
   | 'feed-b-loss'
   | 'both-feeds-loss';
 export type PowerSettings = {
+  presentation: 'physical' | 'schematic';
   rackId: string;
   hardwareId: string;
   scope: PowerScope;
@@ -149,8 +150,9 @@ export function initialPowerSettings(
   return {
     rackId: rack.id,
     hardwareId: h?.id ?? '',
-    scope: 'facility',
-    stageId: 'utility',
+    presentation: 'physical',
+    scope: 'rack',
+    stageId: 'device',
     scenario: 'normal',
     loadPercent: 65,
     lineVoltage: 415,
@@ -1041,6 +1043,7 @@ export function validatePowerPatch(
     throw new Error('Expected a power settings object.');
   const v = input as Record<string, unknown>;
   const allowed = [
+    'presentation',
     'scenario',
     'loadPercent',
     'scope',
@@ -1050,6 +1053,11 @@ export function validatePowerPatch(
   ];
   if (Object.keys(v).some((k) => !allowed.includes(k)))
     throw new Error('Unknown power setting.');
+  if (
+    v.presentation !== undefined &&
+    !['physical', 'schematic'].includes(v.presentation as string)
+  )
+    throw new Error('Presentation must be physical or schematic.');
   if (
     v.scenario !== undefined &&
     !SCENARIOS.some((s) => s.value === v.scenario)

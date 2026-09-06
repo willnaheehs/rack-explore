@@ -73,6 +73,7 @@ test('battery runtime uses total DC energy and no utility transformer loss', () 
   const s = {
     ...defaults,
     scenario: 'battery',
+    scope: 'facility',
     loadPercent: 100,
     batteryKWh: 10,
   };
@@ -280,4 +281,25 @@ test('opening the power view uses the explorer state and rejects unknown racks b
   assert.throws(() => open.execute({ rackId: 'invalid' }));
   assert.throws(() => open.execute({ unexpected: true }));
   assert.deepEqual(state, before);
+});
+
+test('physical and schematic presentations share one scenario and validate presentation changes', () => {
+  const start = initialPowerSettings(model);
+  assert.equal(start.presentation, 'physical');
+  assert.equal(start.scope, 'rack');
+  const changed = validatePowerPatch(
+    { presentation: 'schematic', scenario: 'feed-b-loss', stageId: 'dc-bus' },
+    model,
+    start,
+  );
+  assert.equal(changed.presentation, 'schematic');
+  assert.equal(changed.scenario, 'feed-b-loss');
+  assert.throws(
+    () => validatePowerPatch({ presentation: 'unknown' }, model, changed),
+    /Presentation/,
+  );
+  assert.deepEqual(
+    calculatePower(model, changed),
+    calculatePower(model, { ...changed, presentation: 'physical' }),
+  );
 });
