@@ -59,6 +59,7 @@ import {
   type ModelContext,
 } from '@/lib/webmcp';
 import Topology from './topology';
+import PowerView from './power-view';
 import CatalogPanel from './catalog-panel';
 import RackBuilder from './rack-builder';
 import { profileFor, CATALOG_DATE, type Profile } from '@/lib/catalog';
@@ -130,6 +131,8 @@ export default function Explorer() {
   const [node, setNode] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [view, setView] = useState('physical');
+  const [powerRackId, setPowerRackId] = useState<string | undefined>(undefined);
+  const [powerRevision, setPowerRevision] = useState(0);
   const [layers, setLayers] = useState<Record<Fabric, boolean>>({
     compute: false,
     frontend: false,
@@ -153,6 +156,13 @@ export default function Explorer() {
   const [detailTab, setDetailTab] = useState('overview');
   const [topologyFabric, setTopologyFabric] = useState<Fabric>('compute');
 
+  const openPower = useCallback((rackId: string) => {
+    setPowerRackId(rackId);
+    setPowerRevision((value) => value + 1);
+    setView('power');
+    setMobileInspector(false);
+  }, []);
+
   const h = resolveHardware(selected),
     hover = resolveHardware(hovered);
   const select = useCallback(
@@ -160,6 +170,8 @@ export default function Explorer() {
       const item = lookupHardware(id, model);
       if (!item) return;
       setSelected(id);
+      setPowerRackId(item.rack);
+      setPowerRevision((value) => value + 1);
       setNode((prev) => item.parent ?? (prev === item.id ? prev : null));
       setExpanded((old) =>
         old.includes(item.rack) ? old : [...old, item.rack],
@@ -179,6 +191,7 @@ export default function Explorer() {
   }, []);
   const loadModel = (next: ClusterModel) => {
     setModel(next);
+    setPowerRackId(undefined);
     setSelected(null);
     setNode(null);
     setHovered(null);
@@ -243,10 +256,18 @@ export default function Explorer() {
     view,
     fabric: topologyFabric,
     model,
+    powerRackId,
   });
   useEffect(() => {
-    stateRef.current = { selected, node, view, fabric: topologyFabric, model };
-  }, [selected, node, view, topologyFabric, model]);
+    stateRef.current = {
+      selected,
+      node,
+      view,
+      fabric: topologyFabric,
+      model,
+      powerRackId,
+    };
+  }, [selected, node, view, topologyFabric, model, powerRackId]);
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext })
       .modelContext;
@@ -258,6 +279,11 @@ export default function Explorer() {
         flushSync(() => {
           select(id);
           setView('physical');
+        });
+      },
+      showPower: (rackId: string) => {
+        flushSync(() => {
+          openPower(rackId);
         });
       },
       showFabric: (fabric: Fabric) => {
@@ -277,7 +303,7 @@ export default function Explorer() {
       }
     }
     return () => lifecycle.abort();
-  }, [select]);
+  }, [select, openPower]);
   const inspector = (
     <>
       <div className="inspector-heading">
@@ -334,6 +360,15 @@ export default function Explorer() {
             </TabsList>
             <TabsContent value="overview">
               <p className="component-description">{descriptionFor(h)}</p>
+              <button
+                className="text-button"
+                onClick={() => {
+                  openPower(h.rack);
+                }}
+              >
+                <Zap size={15} /> Trace power to this hardware{' '}
+                <ArrowUpRight size={14} />
+              </button>
               {!h.parent && childrenOf(h).length > 0 && (
                 <button
                   className="primary-button explore-button"
@@ -514,7 +549,9 @@ export default function Explorer() {
     </>
   );
   return (
-    <main className={`explorer ${inventory ? '' : 'inventory-hidden'}`}>
+    <main
+      className={`explorer ${inventory ? '' : 'inventory-hidden'} ${view === 'power' ? 'power-mode' : ''}`}
+    >
       <header className="app-header">
         <button
           className="brand"
@@ -667,12 +704,22 @@ export default function Explorer() {
           </label>
         </div>
         <div className="v2-note">
-          <span className="eyebrow">NEXT / V2</span>
+          <button
+            className="power-entry"
+            onClick={() => {
+              openPower(h?.rack ?? model.racks[0].id);
+            }}
+          >
+            <Zap size={17} />
+            <div>
+              <strong>Power path</strong>
+              <small>From source to silicon</small>
+            </div>
+            <ArrowUpRight size={15} />
+          </button>
           <div>
-            <Zap size={14} />
-            <span>Power</span>
             <Snowflake size={14} />
-            <span>Cooling</span>
+            <span>Next: cooling systems</span>
           </div>
         </div>
       </aside>
@@ -691,15 +738,17 @@ export default function Explorer() {
             <button onClick={reset}>Workspace</button>
             <ChevronRight size={13} />
             <span>
-              {node
-                ? resolveHardware(node)?.name
-                : view === 'physical'
-                  ? 'Rack view'
-                  : 'Fabric topology'}
+              {view === 'power'
+                ? 'Power path'
+                : node
+                  ? resolveHardware(node)?.name
+                  : view === 'physical'
+                    ? 'Rack view'
+                    : 'Fabric topology'}
             </span>
           </div>
           <button
-            className="mobile-inspect icon-button"
+            className={`mobile-inspect icon-button ${view === 'power' ? 'hidden-power-control' : ''}`}
             aria-label="Open inspector"
             onClick={() => setMobileInspector(true)}
           >
@@ -711,7 +760,13 @@ export default function Explorer() {
         </div>
         <div className="stage">
           <div className="stage-top">
-            <Tabs value={view} onValueChange={(v) => setView(String(v))}>
+            <Tabs
+              value={view}
+              onValueChange={(v) => {
+                if (v === 'power') openPower(h?.rack ?? model.racks[0].id);
+                else setView(String(v));
+              }}
+            >
               <TabsList className="view-tabs">
                 <TabsTrigger value="physical">
                   <Box size={16} /> Physical
@@ -719,20 +774,39 @@ export default function Explorer() {
                 <TabsTrigger value="topology">
                   <Network size={16} /> Topology
                 </TabsTrigger>
+                <TabsTrigger value="power">
+                  <Zap size={16} /> Power
+                </TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="scene-readout">
-              {node
-                ? 'COMPONENT ARCHITECTURE'
-                : `${model.racks.length} RACKS / ${model.racks[0].units}U`}
+              {view === 'power'
+                ? 'SOURCE → RACK → COMPONENT'
+                : node
+                  ? 'COMPONENT ARCHITECTURE'
+                  : `${model.racks.length} RACKS / ${model.racks[0].units}U`}
               <span>
-                {node
-                  ? 'Schematic board and module placement'
-                  : '19-inch mounting · metric scale'}
+                {view === 'power'
+                  ? 'Energy conversion · redundancy · load'
+                  : node
+                    ? 'Schematic board and module placement'
+                    : '19-inch mounting · metric scale'}
               </span>
             </div>
           </div>
-          {view === 'physical' ? (
+          {view === 'power' ? (
+            <PowerView
+              key={`${model.id}-${powerRevision}-${selected ?? ''}`}
+              model={model}
+              initialRackId={powerRackId ?? h?.rack}
+              initialHardwareId={selected?.split('/')[0]}
+              onRackChange={setPowerRackId}
+              onInspect={(id) => {
+                select(id);
+                setView('physical');
+              }}
+            />
+          ) : view === 'physical' ? (
             <ClusterScene
               model={model}
               service={service}
@@ -892,7 +966,11 @@ export default function Explorer() {
         <footer className="workspace-status">
           <span>
             <span className="status-square" />{' '}
-            {node ? 'Logical component layout' : 'Scaled enclosure geometry'}
+            {view === 'power'
+              ? 'Power architecture · scenario model'
+              : node
+                ? 'Logical component layout'
+                : 'Scaled enclosure geometry'}
           </span>
           <span>
             {model.hardware.length} devices · {metrics.gpus} GPUs
@@ -950,10 +1028,13 @@ export default function Explorer() {
             </p>
             <h3>Power and cooling</h3>
             <p>
-              Visible power modules, fans and liquid plates help explain the
-              hardware. Electrical distribution, loop design, thermal simulation
-              and operational telemetry remain v2 work. No indicator represents
-              live status.
+              The Power view traces utility and generator sources through
+              transfer gear, UPS paths, rack distribution, PSU conversion and
+              board regulators. Facility architecture, efficiencies, feed
+              mapping, voltage examples and component allocations are
+              educational assumptions. Known device power specifications are
+              cited separately from planning allowances. Cooling loops, thermal
+              simulation and operational telemetry remain future work.
             </p>
             <div className="sources-block">
               {[

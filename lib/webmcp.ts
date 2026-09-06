@@ -12,10 +12,12 @@ export type ExplorerState = {
   view: string;
   fabric: string;
   model: ClusterModel;
+  powerRackId?: string;
 };
 export type ExplorerActions = {
   read: () => ExplorerState;
   inspect: (id: string) => void;
+  showPower?: (rackId: string) => void;
   showFabric: (fabric: 'compute' | 'frontend' | 'storage') => void;
 };
 type Tool = {
@@ -135,5 +137,34 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
         return { state: snapshot(), fabric: FABRICS[fabric] };
       },
     },
+    ...(actions.showPower
+      ? [
+          {
+            name: 'show_cluster_power',
+            title: 'Open the power explorer',
+            description:
+              'Open the source-to-component power explorer for a rack. This shows an educational scenario and never controls real equipment.',
+            inputSchema: {
+              type: 'object',
+              properties: { rackId: { type: 'string' } },
+              additionalProperties: false,
+            },
+            annotations: { readOnlyHint: false, untrustedContentHint: true },
+            execute(input: unknown) {
+              const v = objectInput(input);
+              if (Object.keys(v).some((k) => k !== 'rackId'))
+                throw new Error('Only rackId is accepted.');
+              const rackId = v.rackId ?? actions.read().model.racks[0].id;
+              if (
+                typeof rackId !== 'string' ||
+                !actions.read().model.racks.some((r) => r.id === rackId)
+              )
+                throw new Error('Unknown rack.');
+              actions.showPower!(rackId);
+              return { state: snapshot(), rackId };
+            },
+          },
+        ]
+      : []),
   ];
 }

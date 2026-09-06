@@ -8,6 +8,7 @@ An interactive HPC hardware explorer built with React, Vinext, Three.js, and the
 - Remove bezels and switch between assembled and exploded internal views.
 - Browse **Hardware catalog** for 19 documented or preliminary platform entries, including Dell, HPE, Lenovo, Supermicro, NVIDIA, AMD and DDN.
 - Use **Build a rack** for 42U/48U layouts, equipment placement, planned connections, local saves, and JSON import/export.
+- Select **Power** to trace utility / generator sources through UPS, distribution, rack PSUs or NVL72 power shelves, and component regulators. Try battery operation or A/B feed failures, change the load, and inspect every stage.
 - The H100 reference cluster includes compute, front-end and storage topologies. Standalone hardware presets and NVL72 templates do not imply external fabric connections.
 
 ## Run locally
@@ -36,7 +37,15 @@ Published U heights, selected dimensions, device populations, and port arrangeme
 
 GB200/GB300 NVL72 templates use documented 48U tray positions, including 18 compute trays, 9 NVLink switch trays, 8 power shelves, and 2 management switches. Their proprietary compute trays cannot be placed in ordinary custom 19-inch racks. Memory quantities in the overview sum nominal per-GPU capacities and use decimal TB. OEM-specific values are retained—for example, the referenced Dell XE9780 manual's B300 variant differs from DGX B300.
 
-Custom rack validation checks U bounds, collisions, mounting family, unique device IDs and aggregate logical port / adapter-slot allocation. Planned connection rates are user choices, not protocol, adapter, breakout, cable, or optical compatibility certification. Rail fit, service clearances, load distribution, weight, rack electrical budgets, liquid loops and thermal simulation require separate engineering. Power and cooling system design remains v2.
+Custom rack validation checks U bounds, collisions, mounting family, unique device IDs and aggregate logical port / adapter-slot allocation. Planned connection rates are user choices, not protocol, adapter, breakout, cable, or optical compatibility certification. Rail fit, service clearances, load distribution, weight, rack electrical budgets, liquid loops and thermal simulation require separate engineering. The power explorer explains architecture and demand; it does not validate an electrical installation. Cooling and thermal simulation remain future work.
+
+## Power model
+
+The three scales share one scenario: source and facility, rack distribution, and inside hardware. A/B flow, balanced three-phase current, conversion losses, battery runtime and board allocations respond to the load budget. Component groups link back to the physical inspector, including storage drives and controllers. An empty custom rack remains explorable without inventing devices.
+
+DGX H100/H200, B200 and B300 input budgets use NVIDIA references. NVL72 shelf topology uses the DGX rack guide, including its nominal 50–51 V DC bus. GB200 tray power is allocated from an approximate 120 kW rack budget; GB300 uses an explicit 142 kW planning scenario. Other chassis use labeled editable allowances. Shelf nameplates are never counted again as IT loads.
+
+Facility voltages, equal feed sharing, usable feed current, efficiencies, battery capacity and component shares are examples, not measured site data. The model separately accounts for transformer, UPS, wiring, PSU and board conversion losses. It excludes cooling, other racks, battery aging, recharge, protection coordination and circuit-level wiring. Overloaded paths show requested demand rather than promising delivery. Vendor-documented performance reductions are shown separately from the requested load.
 
 ## Structure
 
@@ -46,8 +55,9 @@ Custom rack validation checks U bounds, collisions, mounting family, unique devi
 - `components/cluster-scene.tsx`: scaled enclosure geometry, component assemblies, picking and camera controls. Static geometry is merged per device/material to reduce draw calls.
 - `components/topology.tsx`: accessible selectable SVG network diagrams.
 - `components/explorer.tsx`, `catalog-panel.tsx`, `rack-builder.tsx`: workstation and workflows.
-- `lib/webmcp.ts`: optional page-scoped read, inspect and show-fabric tools with input validation and abort cleanup.
-- `tests/hardware.test.mjs`: populations, OEM differences, NVL72 locations, placement rules, import safety, link budgets and tool actions.
+- `lib/power.ts`, `components/power-view.tsx`, `app/power.css`: power calculations, stage graphs, scenarios and stage inspection.
+- `lib/webmcp.ts`, `lib/power-tools.ts`: optional page-scoped hardware and power tools with input validation and abort cleanup.
+- `tests/*.test.mjs`: hardware populations, placement/import safety, link budgets, power conservation, source/failure routing, empty/zero-load cases and structured tool actions.
 
 Custom saves use browser localStorage only when **Save locally** is selected. They are device- and origin-local; no cloud database or shared custom data is implied. JSON files provide portability between local and hosted previews.
 
