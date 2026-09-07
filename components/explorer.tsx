@@ -50,6 +50,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetClose,
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
@@ -355,13 +356,21 @@ export default function Explorer() {
     }
     return () => lifecycle.abort();
   }, [select, openPower]);
-  const inspector = (
+  const inspector = (mobile = false) => (
     <>
       <div className="inspector-heading">
         <span className="eyebrow">
           {h ? 'COMPONENT INSPECTOR' : 'CLUSTER OVERVIEW'}
         </span>
-        {h ? (
+        {mobile ? (
+          <SheetClose
+            className="icon-button"
+            aria-label="Close inspector"
+            title="Close inspector"
+          >
+            <X size={16} />
+          </SheetClose>
+        ) : h ? (
           <button
             className="icon-button"
             title="Clear selection"
@@ -1150,15 +1159,18 @@ export default function Explorer() {
         </footer>
       </section>
       <aside className="inspector-panel" aria-label="Hardware inspector">
-        {inspector}
+        {inspector()}
       </aside>
       <Sheet open={mobileInspector} onOpenChange={setMobileInspector}>
-        <SheetContent className="mobile-inspector-sheet">
+        <SheetContent
+          className="mobile-inspector-sheet"
+          showCloseButton={false}
+        >
           <SheetTitle className="sr-only">Hardware inspector</SheetTitle>
           <SheetDescription className="sr-only">
             Component specifications and connections.
           </SheetDescription>
-          <div className="mobile-inspector-content">{inspector}</div>
+          <div className="mobile-inspector-content">{inspector(true)}</div>
         </SheetContent>
       </Sheet>
       <Dialog open={docs} onOpenChange={setDocs}>

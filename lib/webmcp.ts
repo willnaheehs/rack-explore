@@ -2,6 +2,7 @@ import { modelForProfile } from './rack-builder.ts';
 import { VISIBLE_CATALOG } from './catalog.ts';
 import { withReferenceFabrics } from './fabric-references.ts';
 import { validateConfiguration } from './config-validation.ts';
+import { visibleComponentIds } from './component-layout.ts';
 import {
   FABRICS,
   fabricInfo,
@@ -53,7 +54,18 @@ function objectInput(input: unknown): Record<string, unknown> {
 export function explorerTools(actions: ExplorerActions): Tool[] {
   const snapshot = () => {
     const { model, ...state } = actions.read();
-    return { ...state, model: { id: model.id, title: model.title } };
+    const chassis = resolveHardware(state.node, model);
+    return {
+      ...state,
+      visibleComponentIds: chassis
+        ? visibleComponentIds(
+            childrenOf(chassis),
+            state.selected,
+            state.componentPresentation === 'isolated',
+          )
+        : [],
+      model: { id: model.id, title: model.title },
+    };
   };
   const referenceSummary = () =>
     Object.fromEntries(

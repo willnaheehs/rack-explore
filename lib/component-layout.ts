@@ -94,7 +94,9 @@ export function visibleComponentIds(
 ): string[] {
   return isolated && children.some((c) => c.id === selected)
     ? [selected!]
-    : children.map((c) => c.id);
+    : children
+        .filter((c) => c.kind !== 'fan' || c.id === selected)
+        .map((c) => c.id);
 }
 
 // Fit the bounding sphere to the narrower field of view, leaving room for controls.

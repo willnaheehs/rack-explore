@@ -13,16 +13,23 @@ const profiles = VISIBLE_CATALOG.filter((p) => p.status === 'Documented');
 const overlap = (a, b, size) =>
   a.every((n, axis) => Math.abs(n - b[axis]) < size[axis] - 1e-6);
 
-test('all catalog modules can be isolated and the full assembly restored without losing inventory', () => {
+test('all catalog modules remain inspectable while assembly views hide fans without losing inventory', () => {
   for (const p of profiles)
     for (const h of modelForProfile(p.id).hardware) {
       const kids = childrenOf(h),
         ids = kids.map((c) => c.id);
       for (const child of kids) {
         assert.deepEqual(visibleComponentIds(kids, child.id, true), [child.id]);
-        assert.deepEqual(visibleComponentIds(kids, child.id, false), ids);
+        assert.deepEqual(
+          visibleComponentIds(kids, child.id, false),
+          kids
+            .filter((c) => c.kind !== 'fan' || c.id === child.id)
+            .map((c) => c.id),
+        );
       }
-      assert.deepEqual(visibleComponentIds(kids, h.id, true), ids);
+      const withoutFans = kids.filter((c) => c.kind !== 'fan').map((c) => c.id);
+      assert.deepEqual(visibleComponentIds(kids, h.id, false), withoutFans);
+      assert.deepEqual(visibleComponentIds(kids, h.id, true), withoutFans);
       assert.deepEqual(
         childrenOf(h).map((c) => c.id),
         ids,

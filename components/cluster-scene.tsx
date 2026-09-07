@@ -6,8 +6,8 @@ import { profileFor, partFor } from '@/lib/catalog';
 import {
   componentPosition,
   componentFitDistance,
-  visibleComponentIds,
 } from '@/lib/component-layout';
+import { updateComponentVisibility } from '@/lib/component-visibility';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {
@@ -1206,12 +1206,13 @@ export default function ClusterScene(props: Props) {
       selectedId = id;
       const obj = id ? objects.get(id) : undefined;
       if (componentAssembly) {
-        const visible = new Set(
-          visibleComponentIds(assemblyChildren, id, current.current.isolated),
+        assemblyBounds = updateComponentVisibility(
+          objects,
+          assemblyContext,
+          assemblyChildren,
+          id,
+          current.current.isolated,
         );
-        for (const [key, object] of objects) object.visible = visible.has(key);
-        assemblyContext.visible =
-          visible.size !== 1 || !current.current.isolated;
         for (const [key, label] of componentLabels) label.visible = key === id;
       }
       highlight.visible = Boolean(obj);
@@ -1329,7 +1330,8 @@ export default function ClusterScene(props: Props) {
     command({ type: 'fit', sequence: 0 });
     api.current.layers(current.current.layers);
     api.current.labels(current.current.labels);
-    if (props.node && selectedId?.includes('/')) focus(selectedId);
+    // Apply visibility on every scene rebuild, including whole-chassis views.
+    if (props.node) focus(selectedId);
     const ray = new THREE.Raycaster(),
       pointer = new THREE.Vector2();
     let downX = 0,
