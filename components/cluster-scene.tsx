@@ -8,6 +8,7 @@ import {
   componentFitDistance,
 } from '@/lib/component-layout';
 import { updateComponentVisibility } from '@/lib/component-visibility';
+import { createTapGesture } from '@/lib/tap-gesture';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {
@@ -76,7 +77,10 @@ export default function ClusterScene(props: Props) {
       });
       return;
     }
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const touchDevice = window.matchMedia('(pointer: coarse)').matches;
+    renderer.setPixelRatio(
+      Math.min(window.devicePixelRatio, touchDevice ? 1.5 : 2),
+    );
     renderer.setSize(element.clientWidth, element.clientHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -110,7 +114,7 @@ export default function ClusterScene(props: Props) {
     const key = new THREE.DirectionalLight('#fff1d5', 5.5);
     key.position.set(-3, 5, 4);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.mapSize.setScalar(touchDevice ? 1024 : 2048);
     key.shadow.camera.left = -5;
     key.shadow.camera.right = 5;
     key.shadow.camera.top = 4;
@@ -1334,8 +1338,7 @@ export default function ClusterScene(props: Props) {
     if (props.node) focus(selectedId);
     const ray = new THREE.Raycaster(),
       pointer = new THREE.Vector2();
-    let downX = 0,
-      downY = 0;
+    const tapGesture = createTapGesture();
     let hovered: string | null = null;
     function pick(e: PointerEvent) {
       const rect = renderer.domElement.getBoundingClientRect();
@@ -1352,12 +1355,11 @@ export default function ClusterScene(props: Props) {
       )[0]?.object.userData.hardwareId as string | undefined;
     }
     function onDown(e: PointerEvent) {
-      downX = e.clientX;
-      downY = e.clientY;
+      tapGesture.start(e, performance.now());
       moving = false;
     }
     function onUp(e: PointerEvent) {
-      if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) return;
+      if (!tapGesture.end(e, performance.now())) return;
       const id = pick(e);
       if (id) {
         current.current.onSelect(id);
@@ -1365,6 +1367,8 @@ export default function ClusterScene(props: Props) {
       }
     }
     function onMove(e: PointerEvent) {
+      tapGesture.move(e);
+      if (e.pointerType !== 'mouse') return;
       const id = pick(e) ?? null;
       if (id !== hovered) {
         hovered = id;
@@ -1380,6 +1384,7 @@ export default function ClusterScene(props: Props) {
     renderer.domElement.addEventListener('pointerup', onUp);
     renderer.domElement.addEventListener('pointermove', onMove);
     renderer.domElement.addEventListener('pointerleave', onLeave);
+    renderer.domElement.addEventListener('pointercancel', tapGesture.cancel);
     const onContextLost = (e: Event) => {
       e.preventDefault();
       setError(true);
@@ -1428,6 +1433,10 @@ export default function ClusterScene(props: Props) {
       renderer.domElement.removeEventListener('pointerup', onUp);
       renderer.domElement.removeEventListener('pointermove', onMove);
       renderer.domElement.removeEventListener('pointerleave', onLeave);
+      renderer.domElement.removeEventListener(
+        'pointercancel',
+        tapGesture.cancel,
+      );
       scene.traverse((o) => {
         if (o instanceof THREE.Mesh || o instanceof THREE.Line)
           o.geometry.dispose();

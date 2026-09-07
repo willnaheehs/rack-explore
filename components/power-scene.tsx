@@ -1,4 +1,5 @@
 'use client';
+import { createTapGesture } from '@/lib/tap-gesture';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -74,7 +75,8 @@ export default function PowerScene(props: Props) {
       queueMicrotask(fail);
       return;
     }
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    const touchDevice = window.matchMedia('(pointer: coarse)').matches;
+    renderer.setPixelRatio(Math.min(devicePixelRatio, touchDevice ? 1.5 : 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.25;
@@ -109,7 +111,7 @@ export default function PowerScene(props: Props) {
     const key = new THREE.DirectionalLight('#fff5e7', 4);
     key.position.set(-4, 8, 6);
     key.castShadow = true;
-    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.mapSize.setScalar(touchDevice ? 1024 : 2048);
     const area = layout.span;
     Object.assign(key.shadow.camera, {
       left: -area,
@@ -688,7 +690,7 @@ export default function PowerScene(props: Props) {
     sync();
     const ray = new THREE.Raycaster(),
       pointer = new THREE.Vector2();
-    let down: Point3 = [0, 0, 0];
+    const tapGesture = createTapGesture();
     const pick = (e: PointerEvent) => {
       const rect = renderer.domElement.getBoundingClientRect();
       pointer.set(
@@ -705,19 +707,17 @@ export default function PowerScene(props: Props) {
     };
     orbit.addEventListener('start', cancelMotion);
     const onDown = (e: PointerEvent) => {
-      down = [e.clientX, e.clientY, performance.now()];
+      tapGesture.start(e, performance.now());
       moving = false;
     };
     const onUp = (e: PointerEvent) => {
-      if (
-        Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5 ||
-        performance.now() - down[2] > 800
-      )
-        return;
+      if (!tapGesture.end(e, performance.now())) return;
       const part = pick(e);
       if (part) current.current.onSelect(part.stageId, part.hardwareId);
     };
     const onMove = (e: PointerEvent) => {
+      tapGesture.move(e);
+      if (e.pointerType !== 'mouse') return;
       renderer.domElement.style.cursor = pick(e) ? 'pointer' : 'grab';
     };
     const onLost = (e: Event) => {
@@ -727,6 +727,7 @@ export default function PowerScene(props: Props) {
     renderer.domElement.addEventListener('pointerdown', onDown);
     renderer.domElement.addEventListener('pointerup', onUp);
     renderer.domElement.addEventListener('pointermove', onMove);
+    renderer.domElement.addEventListener('pointercancel', tapGesture.cancel);
     renderer.domElement.addEventListener('webglcontextlost', onLost);
     const resize = () => {
       const w = element.clientWidth,
@@ -824,6 +825,10 @@ export default function PowerScene(props: Props) {
       renderer.domElement.removeEventListener('pointerdown', onDown);
       renderer.domElement.removeEventListener('pointerup', onUp);
       renderer.domElement.removeEventListener('pointermove', onMove);
+      renderer.domElement.removeEventListener(
+        'pointercancel',
+        tapGesture.cancel,
+      );
       renderer.domElement.removeEventListener('webglcontextlost', onLost);
       nameplates.forEach((l) => l.el.remove());
       geometrySet.forEach((g) => g.dispose());

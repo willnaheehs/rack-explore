@@ -41,6 +41,12 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverTitle,
+} from '@/components/ui/popover';
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -93,6 +99,12 @@ import {
 function subscribeScreen(callback: () => void) {
   window.addEventListener('resize', callback);
   return () => window.removeEventListener('resize', callback);
+}
+function compactScreen() {
+  return (
+    window.innerWidth <= 767 ||
+    (window.innerWidth < 1100 && window.innerHeight <= 500)
+  );
 }
 const ICONS = {
   dgx: Server,
@@ -156,11 +168,14 @@ export default function Explorer() {
   const [expanded, setExpanded] = useState<string[]>(['A01']);
   const smallScreen = useSyncExternalStore(
     subscribeScreen,
-    () => window.innerWidth <= 650,
+    compactScreen,
     () => false,
   );
   const [inventoryOverride, setInventory] = useState<boolean | null>(null);
-  const inventory = inventoryOverride ?? !smallScreen;
+  const [mobileInventory, setMobileInventory] = useState(false);
+  const inventory = smallScreen ? mobileInventory : (inventoryOverride ?? true);
+  const toggleInventory = (open: boolean) =>
+    smallScreen ? setMobileInventory(open) : setInventory(open);
   const [docs, setDocs] = useState(false);
   const [mobileInspector, setMobileInspector] = useState(false);
   const [command, setCommand] = useState<CameraCommand>({
@@ -177,6 +192,7 @@ export default function Explorer() {
     setPowerRackId(rackId);
     setPowerRevision((value) => value + 1);
     setView('power');
+    setMobileInventory(false);
     setMobileInspector(false);
   }, []);
 
@@ -196,7 +212,9 @@ export default function Explorer() {
         old.includes(item.rack) ? old : [...old, item.rack],
       );
       setDetailTab('overview');
-      if (window.innerWidth < 1100) setMobileInspector(true);
+      setMobileInventory(false);
+      if (compactScreen()) setMobileInspector(false);
+      else if (window.innerWidth < 1100) setMobileInspector(true);
     },
     [model],
   );
@@ -206,11 +224,14 @@ export default function Explorer() {
     setSelected(null);
     setNode(null);
     setIsolated(false);
+    setMobileInventory(false);
     setDetailTab('overview');
     setCommand((c) => ({ type: 'fit', sequence: c.sequence + 1 }));
   }, []);
   const loadModel = (next: ClusterModel) => {
     setIsolated(false);
+    setMobileInspector(false);
+    setMobileInventory(false);
     const displayed = withReferenceFabrics(next);
     setModel(displayed);
     setTopologyPresentation(
@@ -325,6 +346,7 @@ export default function Explorer() {
         flushSync(() => {
           select(id);
           setView('physical');
+          if (window.innerWidth < 1100) setMobileInspector(true);
         });
       },
       showPower: (rackId: string) => {
@@ -342,6 +364,8 @@ export default function Explorer() {
           if (presentation) setTopologyPresentation(presentation);
           setTopologyFabric(fabric);
           setView('topology');
+          setMobileInspector(false);
+          setMobileInventory(false);
         });
       },
     };
@@ -609,9 +633,219 @@ export default function Explorer() {
       )}
     </>
   );
+  const inventoryContent = (
+    <>
+      <div className="inventory-heading">
+        <span className="eyebrow">EXPLORER</span>
+        <button
+          className="icon-button"
+          title="Hide inventory"
+          aria-label="Hide inventory"
+          onClick={() => toggleInventory(false)}
+        >
+          <PanelLeftClose size={16} />
+        </button>
+      </div>
+      <button
+        className={`cluster-root ${!selected ? 'active' : ''}`}
+        onClick={reset}
+      >
+        <Box size={17} />
+        <span>{model.custom ? 'Custom cluster' : 'Current platform'}</span>
+        <span className="counter">{model.racks.length}</span>
+      </button>
+      <div className="inventory-tree">
+        {model.racks.map((r) => (
+          <div key={r.id} className="rack-tree">
+            <button
+              className="rack-tree-button"
+              aria-expanded={expanded.includes(r.id)}
+              onClick={() =>
+                setExpanded((old) =>
+                  old.includes(r.id)
+                    ? old.filter((x) => x !== r.id)
+                    : [...old, r.id],
+                )
+              }
+            >
+              {expanded.includes(r.id) ? (
+                <ChevronDown size={14} />
+              ) : (
+                <ChevronRight size={14} />
+              )}
+              <Server size={15} />
+              <span>
+                {r.id}
+                <small>{r.name}</small>
+              </span>
+              <span className="rack-units">{r.units}U</span>
+            </button>
+            {expanded.includes(r.id) && (
+              <div className="rack-children">
+                {model.hardware
+                  .filter((item) => item.rack === r.id)
+                  .sort((a, b) => b.u - a.u)
+                  .map((item) => (
+                    <button
+                      key={item.id}
+                      className={`hardware-row ${selected?.split('/')[0] === item.id ? 'selected' : ''}`}
+                      aria-pressed={selected?.split('/')[0] === item.id}
+                      onClick={() => {
+                        setNode(null);
+                        select(item.id);
+                      }}
+                    >
+                      <HardwareIcon kind={item.kind} size={14} />
+                      <span>{item.name}</span>
+                      <small>{item.height}U</small>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="layers-panel">
+        {model.fabricReferences && (
+          <div className="reference-sidebar-note">
+            <strong>Sourced connection plans</strong>
+            <p>
+              {model.links.length
+                ? 'Trace rack connections in 3D. Topology also includes the vendor reference plans.'
+                : 'Open a fabric to inspect its documented ports, topology and sources.'}
+            </p>
+          </div>
+        )}
+
+        <div className="section-label">
+          <Layers3 size={15} />
+          <span>FABRIC LAYERS</span>
+        </div>
+        {model.fabricReferences && !model.links.length ? (
+          Object.entries(FABRICS).map(([key, f]) => (
+            <button
+              className={`reference-fabric-button ${view === 'topology' && topologyFabric === key ? 'active' : ''}`}
+              key={key}
+              onClick={() => {
+                setTopologyFabric(key as Fabric);
+                setView('topology');
+                setMobileInventory(false);
+              }}
+            >
+              <ColorDot color={f.color} />
+              <span>
+                {f.name}
+                <small>{model.fabricReferences?.[key as Fabric].status}</small>
+              </span>
+              <ArrowUpRight size={14} />
+            </button>
+          ))
+        ) : (
+          <>
+            {' '}
+            {Object.entries(FABRICS).map(([key, f]) => (
+              <label
+                key={key}
+                htmlFor={`layer-${key}`}
+                className="layer-control"
+              >
+                <ColorDot color={f.color} />
+                <span>{f.name}</span>
+                <Switch
+                  id={`layer-${key}`}
+                  aria-label={`Show ${f.name}`}
+                  checked={layers[key as Fabric]}
+                  onCheckedChange={(checked) =>
+                    setLayers((old) => ({ ...old, [key]: checked }))
+                  }
+                />
+              </label>
+            ))}
+          </>
+        )}
+        <div className="layer-note">
+          {model.fabricReferences && !model.links.length
+            ? 'Connection plans in Topology'
+            : 'Physical view · planned cable paths'}
+        </div>
+        <label htmlFor="rack-labels" className="label-control">
+          <span>Rack labels</span>
+          <Switch
+            id="rack-labels"
+            aria-label="Show rack labels"
+            checked={labels}
+            onCheckedChange={setLabels}
+          />
+        </label>
+      </div>
+      <div className="v2-note">
+        <button
+          className="power-entry"
+          onClick={() => {
+            openPower(h?.rack ?? model.racks[0].id);
+          }}
+        >
+          <Zap size={17} />
+          <div>
+            <strong>Power path</strong>
+            <small>From source to silicon</small>
+          </div>
+          <ArrowUpRight size={15} />
+        </button>
+        <div>
+          <Snowflake size={14} />
+          <span>Next: cooling systems</span>
+        </div>
+      </div>
+    </>
+  );
+  const assemblyOptions = (
+    <>
+      {node && h?.parent && (
+        <>
+          <button className="quiet-button" onClick={() => exploreNode(node)}>
+            <ArrowLeft size={14} /> Full assembly
+          </button>
+          <label htmlFor="component-context">
+            <span>Nearby parts</span>
+            <Switch
+              id="component-context"
+              aria-label="Show nearby components"
+              checked={!isolated}
+              onCheckedChange={(checked) => {
+                setIsolated(!checked);
+                camera('fit');
+              }}
+            />
+          </label>
+        </>
+      )}
+      {node ? (
+        <label htmlFor="assembly-explode">
+          <span>Exploded assembly</span>
+          <Switch
+            id="assembly-explode"
+            aria-label="Explode component assembly"
+            checked={exploded}
+            onCheckedChange={setExploded}
+          />
+        </label>
+      ) : (
+        <label htmlFor="remove-bezels">
+          <span>Remove bezels</span>
+          <Switch
+            id="remove-bezels"
+            aria-label="Remove chassis bezels"
+            checked={service}
+            onCheckedChange={setService}
+          />
+        </label>
+      )}
+    </>
+  );
   return (
     <main
-      className={`explorer ${inventory ? '' : 'inventory-hidden'} ${view === 'power' ? 'power-mode' : ''} ${node && view === 'physical' ? 'component-view' : ''}`}
+      className={`explorer ${inventory ? '' : 'inventory-hidden'} ${h ? 'has-selection' : ''} ${view === 'power' ? 'power-mode' : ''} ${node && view === 'physical' ? 'component-view' : ''}`}
     >
       <header className="app-header">
         <button
@@ -661,179 +895,32 @@ export default function Explorer() {
           </button>
         </div>
       </header>
-      <aside className="inventory-panel">
-        <div className="inventory-heading">
-          <span className="eyebrow">EXPLORER</span>
-          <button
-            className="icon-button"
-            title="Hide inventory"
-            aria-label="Hide inventory"
-            onClick={() => setInventory(false)}
-          >
-            <PanelLeftClose size={16} />
-          </button>
-        </div>
-        <button
-          className={`cluster-root ${!selected ? 'active' : ''}`}
-          onClick={reset}
-        >
-          <Box size={17} />
-          <span>{model.custom ? 'Custom cluster' : 'Current platform'}</span>
-          <span className="counter">{model.racks.length}</span>
-        </button>
-        <div className="inventory-tree">
-          {model.racks.map((r) => (
-            <div key={r.id} className="rack-tree">
-              <button
-                className="rack-tree-button"
-                aria-expanded={expanded.includes(r.id)}
-                onClick={() =>
-                  setExpanded((old) =>
-                    old.includes(r.id)
-                      ? old.filter((x) => x !== r.id)
-                      : [...old, r.id],
-                  )
-                }
-              >
-                {expanded.includes(r.id) ? (
-                  <ChevronDown size={14} />
-                ) : (
-                  <ChevronRight size={14} />
-                )}
-                <Server size={15} />
-                <span>
-                  {r.id}
-                  <small>{r.name}</small>
-                </span>
-                <span className="rack-units">{r.units}U</span>
-              </button>
-              {expanded.includes(r.id) && (
-                <div className="rack-children">
-                  {model.hardware
-                    .filter((item) => item.rack === r.id)
-                    .sort((a, b) => b.u - a.u)
-                    .map((item) => (
-                      <button
-                        key={item.id}
-                        className={`hardware-row ${selected?.split('/')[0] === item.id ? 'selected' : ''}`}
-                        aria-pressed={selected?.split('/')[0] === item.id}
-                        onClick={() => {
-                          setNode(null);
-                          select(item.id);
-                        }}
-                      >
-                        <HardwareIcon kind={item.kind} size={14} />
-                        <span>{item.name}</span>
-                        <small>{item.height}U</small>
-                      </button>
-                    ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="layers-panel">
-          {model.fabricReferences && (
-            <div className="reference-sidebar-note">
-              <strong>Sourced connection plans</strong>
-              <p>
-                {model.links.length
-                  ? 'Trace rack connections in 3D. Topology also includes the vendor reference plans.'
-                  : 'Open a fabric to inspect its documented ports, topology and sources.'}
-              </p>
-            </div>
-          )}
-
-          <div className="section-label">
-            <Layers3 size={15} />
-            <span>FABRIC LAYERS</span>
-          </div>
-          {model.fabricReferences && !model.links.length ? (
-            Object.entries(FABRICS).map(([key, f]) => (
-              <button
-                className={`reference-fabric-button ${view === 'topology' && topologyFabric === key ? 'active' : ''}`}
-                key={key}
-                onClick={() => {
-                  setTopologyFabric(key as Fabric);
-                  setView('topology');
-                }}
-              >
-                <ColorDot color={f.color} />
-                <span>
-                  {f.name}
-                  <small>
-                    {model.fabricReferences?.[key as Fabric].status}
-                  </small>
-                </span>
-                <ArrowUpRight size={14} />
-              </button>
-            ))
-          ) : (
-            <>
-              {' '}
-              {Object.entries(FABRICS).map(([key, f]) => (
-                <label
-                  key={key}
-                  htmlFor={`layer-${key}`}
-                  className="layer-control"
-                >
-                  <ColorDot color={f.color} />
-                  <span>{f.name}</span>
-                  <Switch
-                    id={`layer-${key}`}
-                    aria-label={`Show ${f.name}`}
-                    checked={layers[key as Fabric]}
-                    onCheckedChange={(checked) =>
-                      setLayers((old) => ({ ...old, [key]: checked }))
-                    }
-                  />
-                </label>
-              ))}
-            </>
-          )}
-          <div className="layer-note">
-            {model.fabricReferences && !model.links.length
-              ? 'Connection plans in Topology'
-              : 'Physical view · planned cable paths'}
-          </div>
-          <label htmlFor="rack-labels" className="label-control">
-            <span>Rack labels</span>
-            <Switch
-              id="rack-labels"
-              aria-label="Show rack labels"
-              checked={labels}
-              onCheckedChange={setLabels}
-            />
-          </label>
-        </div>
-        <div className="v2-note">
-          <button
-            className="power-entry"
-            onClick={() => {
-              openPower(h?.rack ?? model.racks[0].id);
-            }}
-          >
-            <Zap size={17} />
-            <div>
-              <strong>Power path</strong>
-              <small>From source to silicon</small>
-            </div>
-            <ArrowUpRight size={15} />
-          </button>
-          <div>
-            <Snowflake size={14} />
-            <span>Next: cooling systems</span>
-          </div>
-        </div>
+      <aside className="inventory-panel" aria-label="Hardware inventory">
+        {!smallScreen && inventoryContent}
       </aside>
+      {smallScreen && (
+        <Sheet open={mobileInventory} onOpenChange={setMobileInventory}>
+          <SheetContent
+            side="left"
+            className="mobile-inventory-sheet"
+            showCloseButton={false}
+          >
+            <SheetTitle className="sr-only">Hardware inventory</SheetTitle>
+            <SheetDescription className="sr-only">
+              Select a rack device or choose a fabric layer.
+            </SheetDescription>
+            {inventoryContent}
+          </SheetContent>
+        </Sheet>
+      )}
       <section className="workspace" aria-label="Cluster visualization">
         <div className="workspace-topbar">
           <div className="breadcrumbs">
-            {!inventory && (
+            {(!inventory || smallScreen) && (
               <button
                 className="icon-button"
                 aria-label="Show inventory"
-                onClick={() => setInventory(true)}
+                onClick={() => toggleInventory(true)}
               >
                 <PanelLeft size={17} />
               </button>
@@ -915,20 +1002,22 @@ export default function Explorer() {
               }}
             />
           ) : view === 'physical' ? (
-            <ClusterScene
-              model={model}
-              service={service}
-              exploded={exploded}
-              isolated={isolated}
-              selected={selected}
-              node={node}
-              layers={layers}
-              labels={labels}
-              command={command}
-              onSelect={select}
-              onHover={setHovered}
-              onUnavailable={() => setView('topology')}
-            />
+            <div className="hardware-viewport">
+              <ClusterScene
+                model={model}
+                service={service}
+                exploded={exploded}
+                isolated={isolated}
+                selected={selected}
+                node={node}
+                layers={layers}
+                labels={labels}
+                command={command}
+                onSelect={select}
+                onHover={setHovered}
+                onUnavailable={() => setView('topology')}
+              />
+            </div>
           ) : (
             <div className="topology-surface">
               <div className="topology-fabric-tabs">
@@ -1032,51 +1121,9 @@ export default function Explorer() {
                         : 'Select a chassis. Open it. Follow the hardware.'}
                 </p>
               </div>
-              <div className="assembly-controls">
-                {node && h?.parent && (
-                  <>
-                    <button
-                      className="quiet-button"
-                      onClick={() => exploreNode(node)}
-                    >
-                      <ArrowLeft size={14} /> Full assembly
-                    </button>
-                    <label htmlFor="component-context">
-                      <span>Nearby parts</span>
-                      <Switch
-                        id="component-context"
-                        aria-label="Show nearby components"
-                        checked={!isolated}
-                        onCheckedChange={(checked) => {
-                          setIsolated(!checked);
-                          camera('fit');
-                        }}
-                      />
-                    </label>
-                  </>
-                )}
-                {node ? (
-                  <label htmlFor="assembly-explode">
-                    <span>Exploded assembly</span>
-                    <Switch
-                      id="assembly-explode"
-                      aria-label="Explode component assembly"
-                      checked={exploded}
-                      onCheckedChange={setExploded}
-                    />
-                  </label>
-                ) : (
-                  <label htmlFor="remove-bezels">
-                    <span>Remove bezels</span>
-                    <Switch
-                      id="remove-bezels"
-                      aria-label="Remove chassis bezels"
-                      checked={service}
-                      onCheckedChange={setService}
-                    />
-                  </label>
-                )}
-              </div>
+              {!smallScreen && (
+                <div className="assembly-controls">{assemblyOptions}</div>
+              )}
               <div className="camera-tools">
                 <div className="camera-presets">
                   <button
@@ -1090,14 +1137,14 @@ export default function Explorer() {
                 </div>
                 <span />
                 <button
-                  className="icon-button"
+                  className="icon-button camera-zoom-button"
                   onClick={() => camera('out')}
                   aria-label="Zoom out"
                 >
                   <Minus size={17} />
                 </button>
                 <button
-                  className="icon-button"
+                  className="icon-button camera-zoom-button"
                   onClick={() => camera('in')}
                   aria-label="Zoom in"
                 >
@@ -1112,16 +1159,76 @@ export default function Explorer() {
                   <Maximize size={16} />
                 </button>
                 <button
-                  className="icon-button"
+                  className="icon-button camera-reset-button"
                   onClick={reset}
                   aria-label="Reset view"
                   title="Reset view"
                 >
                   <RotateCcw size={15} />
                 </button>
+                {smallScreen && (
+                  <Popover>
+                    <PopoverTrigger
+                      render={
+                        <button
+                          className="icon-button"
+                          aria-label="View options"
+                        />
+                      }
+                    >
+                      <SlidersHorizontal size={18} />
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="mobile-scene-options"
+                      side="top"
+                      align="end"
+                      sideOffset={12}
+                    >
+                      <PopoverTitle>View options</PopoverTitle>
+                      {assemblyOptions}
+                      <div className="mobile-camera-actions">
+                        <button
+                          className="quiet-button"
+                          onClick={() => camera('out')}
+                          aria-label="Zoom out"
+                        >
+                          <Minus size={18} />
+                        </button>
+                        <button
+                          className="quiet-button"
+                          onClick={() => camera('in')}
+                          aria-label="Zoom in"
+                        >
+                          <Plus size={18} />
+                        </button>
+                        <button className="quiet-button" onClick={reset}>
+                          <RotateCcw size={16} /> Reset
+                        </button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
               </div>
+              {smallScreen && h && (
+                <button
+                  className="mobile-selection"
+                  onClick={() => setMobileInspector(true)}
+                  aria-label={`Inspect ${h.name}`}
+                >
+                  <HardwareIcon kind={h.kind} size={20} />
+                  <span>
+                    <strong>{h.name}</strong>
+                    <small>{h.model}</small>
+                  </span>
+                  <span className="mobile-selection-action">
+                    Inspect <ChevronRight size={16} />
+                  </span>
+                </button>
+              )}
               <div className="scene-hint">
-                {hover ? (
+                {smallScreen ? (
+                  <span>Drag to orbit · Pinch to zoom · Tap to select</span>
+                ) : hover ? (
                   <>
                     <HardwareIcon kind={hover.kind} />
                     <strong>{hover.name}</strong>
@@ -1165,6 +1272,7 @@ export default function Explorer() {
         <SheetContent
           className="mobile-inspector-sheet"
           showCloseButton={false}
+          side={smallScreen ? 'bottom' : 'right'}
         >
           <SheetTitle className="sr-only">Hardware inspector</SheetTitle>
           <SheetDescription className="sr-only">

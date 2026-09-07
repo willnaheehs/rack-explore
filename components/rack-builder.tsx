@@ -188,8 +188,8 @@ export default function RackBuilder({
           <div className="eyebrow">CUSTOM RACK WORKSPACE</div>
           <DialogTitle>Build your cluster.</DialogTitle>
           <DialogDescription>
-            Choose equipment, then select its starting rack unit. Drag a catalog
-            item onto the elevation, or use the placement controls.
+            Choose equipment, set its starting rack unit, then select Add to
+            rack. You can also drag equipment onto the rack with a mouse.
           </DialogDescription>
         </DialogHeader>
         <div className="builder-toolbar">
