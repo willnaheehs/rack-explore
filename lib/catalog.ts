@@ -1473,3 +1473,4 @@ export function partFor(h: Hardware): Part | undefined {
   return h.part ? profileFor(h).parts.find((p) => p.key === h.part) : undefined;
 }
 export const CATALOG_DATE = '6 September 2026';
+export const CATALOG_REVISION = '2026-09-06';

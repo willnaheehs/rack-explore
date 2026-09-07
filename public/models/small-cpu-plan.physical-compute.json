@@ -1,0 +1,819 @@
+{
+  "assets": [
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "site",
+      "name": "Example site",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.site",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "room",
+      "name": "Equipment room",
+      "parentId": "site",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.room",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "rack",
+      "name": "Rack 01",
+      "parentId": "room",
+      "placement": {
+        "position": [
+          0,
+          0,
+          0
+        ]
+      },
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.rack",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "switch",
+      "name": "Network switch",
+      "parentId": "rack",
+      "placement": {
+        "rack": {
+          "height": 1,
+          "mount": "19-inch",
+          "u": 40
+        }
+      },
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.switch",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "pdu",
+      "name": "Rack PDU",
+      "parentId": "rack",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.pdu",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-1",
+      "name": "CPU server 1",
+      "parentId": "rack",
+      "placement": {
+        "rack": {
+          "height": 2,
+          "mount": "19-inch",
+          "u": 3
+        }
+      },
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.server",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-1/board",
+      "name": "System board",
+      "parentId": "server-1",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.board",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-1/cpu",
+      "name": "Processor",
+      "parentId": "server-1/board",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.cpu",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-1/memory",
+      "name": "Memory",
+      "parentId": "server-1/board",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.memory",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-1/ssd",
+      "name": "Boot drive",
+      "parentId": "server-1",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.ssd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-1/ssd/controller",
+      "name": "Controller",
+      "parentId": "server-1/ssd",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.ssd-controller",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-1/ssd/nand",
+      "name": "Flash package · representative",
+      "parentId": "server-1/ssd",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "example.nand",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-2",
+      "name": "CPU server 2",
+      "parentId": "rack",
+      "placement": {
+        "rack": {
+          "height": 2,
+          "mount": "19-inch",
+          "u": 6
+        }
+      },
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.server",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-2/board",
+      "name": "System board",
+      "parentId": "server-2",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.board",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-2/cpu",
+      "name": "Processor",
+      "parentId": "server-2/board",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.cpu",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-2/memory",
+      "name": "Memory",
+      "parentId": "server-2/board",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.memory",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-2/ssd",
+      "name": "Boot drive",
+      "parentId": "server-2",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.ssd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-2/ssd/controller",
+      "name": "Controller",
+      "parentId": "server-2/ssd",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "example.ssd-controller",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "facts": [],
+      "id": "server-2/ssd/nand",
+      "name": "Flash package · representative",
+      "parentId": "server-2/ssd",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "example.nand",
+      "typeRevision": 1
+    }
+  ],
+  "connections": [
+    {
+      "capacity": {
+        "unit": "Gb/s",
+        "value": 10
+      },
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "from": "switch/port/port-1",
+      "id": "network-1",
+      "kind": "physical",
+      "medium": "data",
+      "name": "Switch to server 1",
+      "quantity": 1,
+      "to": "server-1/port/network-1"
+    },
+    {
+      "capacity": {
+        "unit": "W",
+        "value": 500
+      },
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "from": "pdu/port/outlet-1",
+      "id": "power-1",
+      "kind": "physical",
+      "medium": "power",
+      "name": "PDU to server 1",
+      "quantity": 1,
+      "to": "server-1/port/power-in"
+    },
+    {
+      "capacity": {
+        "unit": "Gb/s",
+        "value": 10
+      },
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "from": "switch/port/port-2",
+      "id": "network-2",
+      "kind": "physical",
+      "medium": "data",
+      "name": "Switch to server 2",
+      "quantity": 1,
+      "to": "server-2/port/network-1"
+    },
+    {
+      "capacity": {
+        "unit": "W",
+        "value": 500
+      },
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "from": "pdu/port/outlet-2",
+      "id": "power-2",
+      "kind": "physical",
+      "medium": "power",
+      "name": "PDU to server 2",
+      "quantity": 1,
+      "to": "server-2/port/power-in"
+    }
+  ],
+  "description": "A two-server example with nested components and individual network and power connections. Replace its assumptions with your own inventory.",
+  "format": "physical-compute",
+  "groups": [
+    {
+      "assetIds": [
+        "server-1",
+        "server-2",
+        "switch"
+      ],
+      "id": "cluster",
+      "name": "CPU cluster"
+    }
+  ],
+  "id": "small-cpu-plan",
+  "interfaces": [
+    {
+      "assetId": "switch",
+      "capacity": {
+        "unit": "Gb/s",
+        "value": 10
+      },
+      "count": 1,
+      "direction": "bidirectional",
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "id": "switch/port/port-1",
+      "key": "port-1",
+      "kind": "physical",
+      "medium": "data",
+      "name": "port-1",
+      "protocol": "ethernet"
+    },
+    {
+      "assetId": "switch",
+      "capacity": {
+        "unit": "Gb/s",
+        "value": 10
+      },
+      "count": 1,
+      "direction": "bidirectional",
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "id": "switch/port/port-2",
+      "key": "port-2",
+      "kind": "physical",
+      "medium": "data",
+      "name": "port-2",
+      "protocol": "ethernet"
+    },
+    {
+      "assetId": "pdu",
+      "capacity": {
+        "unit": "kW",
+        "value": 1
+      },
+      "count": 1,
+      "direction": "out",
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "id": "pdu/port/outlet-1",
+      "key": "outlet-1",
+      "kind": "physical",
+      "medium": "power",
+      "name": "outlet-1"
+    },
+    {
+      "assetId": "pdu",
+      "capacity": {
+        "unit": "kW",
+        "value": 1
+      },
+      "count": 1,
+      "direction": "out",
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "id": "pdu/port/outlet-2",
+      "key": "outlet-2",
+      "kind": "physical",
+      "medium": "power",
+      "name": "outlet-2"
+    },
+    {
+      "assetId": "server-1",
+      "capacity": {
+        "unit": "Gb/s",
+        "value": 10
+      },
+      "count": 1,
+      "direction": "bidirectional",
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "id": "server-1/port/network-1",
+      "key": "network-1",
+      "kind": "physical",
+      "medium": "data",
+      "name": "network-1",
+      "protocol": "ethernet"
+    },
+    {
+      "assetId": "server-1",
+      "capacity": {
+        "unit": "W",
+        "value": 500
+      },
+      "count": 1,
+      "direction": "in",
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "id": "server-1/port/power-in",
+      "key": "power-in",
+      "kind": "physical",
+      "medium": "power",
+      "name": "power-in"
+    },
+    {
+      "assetId": "server-2",
+      "capacity": {
+        "unit": "Gb/s",
+        "value": 10
+      },
+      "count": 1,
+      "direction": "bidirectional",
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "id": "server-2/port/network-1",
+      "key": "network-1",
+      "kind": "physical",
+      "medium": "data",
+      "name": "network-1",
+      "protocol": "ethernet"
+    },
+    {
+      "assetId": "server-2",
+      "capacity": {
+        "unit": "W",
+        "value": 500
+      },
+      "count": 1,
+      "direction": "in",
+      "evidence": {
+        "basis": "estimated",
+        "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+        "sources": []
+      },
+      "id": "server-2/port/power-in",
+      "key": "power-in",
+      "kind": "physical",
+      "medium": "power",
+      "name": "power-in"
+    }
+  ],
+  "purpose": "plan",
+  "sources": [],
+  "title": "Small CPU cluster",
+  "types": [
+    {
+      "category": "site",
+      "facts": [],
+      "id": "example.site",
+      "name": "Small compute site",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "hall",
+      "facts": [],
+      "id": "example.room",
+      "name": "Equipment room",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "rack",
+      "facts": [
+        {
+          "evidence": {
+            "basis": "estimated",
+            "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+            "sources": []
+          },
+          "key": "rack.units",
+          "label": "Height",
+          "unit": "U",
+          "value": 42
+        },
+        {
+          "evidence": {
+            "basis": "estimated",
+            "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+            "sources": []
+          },
+          "key": "rack.mount",
+          "label": "Mounting",
+          "value": "19-inch"
+        }
+      ],
+      "id": "example.rack",
+      "name": "42U rack",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "compute",
+      "facts": [
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "equipment.sku",
+          "label": "Exact model",
+          "value": null
+        },
+        {
+          "evidence": {
+            "basis": "estimated",
+            "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+            "sources": []
+          },
+          "key": "compute.socketCount",
+          "label": "CPU sockets",
+          "value": 1
+        }
+      ],
+      "id": "example.server",
+      "name": "Generic CPU server",
+      "ports": [
+        {
+          "capacity": {
+            "unit": "Gb/s",
+            "value": 10
+          },
+          "direction": "bidirectional",
+          "key": "network-1",
+          "medium": "data",
+          "name": "network-1",
+          "protocol": "ethernet"
+        },
+        {
+          "capacity": {
+            "unit": "W",
+            "value": 500
+          },
+          "direction": "in",
+          "key": "power-in",
+          "medium": "power",
+          "name": "power-in"
+        }
+      ],
+      "revision": 1
+    },
+    {
+      "category": "component",
+      "facts": [],
+      "id": "example.board",
+      "name": "System board",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "component",
+      "facts": [
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "compute.cores",
+          "label": "Cores",
+          "value": null
+        }
+      ],
+      "id": "example.cpu",
+      "name": "Host processor",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "component",
+      "facts": [
+        {
+          "evidence": {
+            "basis": "estimated",
+            "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+            "sources": []
+          },
+          "key": "memory.capacity",
+          "label": "Capacity",
+          "unit": "GiB",
+          "value": 32
+        }
+      ],
+      "id": "example.memory",
+      "name": "Memory module",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "storage",
+      "facts": [
+        {
+          "evidence": {
+            "basis": "estimated",
+            "note": "Example configuration for learning and planning. This is not the owner’s mini data center.",
+            "sources": []
+          },
+          "key": "storage.capacity",
+          "label": "Capacity",
+          "unit": "TB",
+          "value": 1
+        }
+      ],
+      "id": "example.ssd",
+      "name": "Boot SSD",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "component",
+      "facts": [],
+      "id": "example.ssd-controller",
+      "name": "SSD controller",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "component",
+      "facts": [
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "storage.packageCount",
+          "label": "Package count",
+          "value": null
+        }
+      ],
+      "id": "example.nand",
+      "name": "NAND package",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "network",
+      "facts": [],
+      "id": "example.switch",
+      "name": "Ethernet switch",
+      "ports": [
+        {
+          "capacity": {
+            "unit": "Gb/s",
+            "value": 10
+          },
+          "direction": "bidirectional",
+          "key": "port-1",
+          "medium": "data",
+          "name": "port-1",
+          "protocol": "ethernet"
+        },
+        {
+          "capacity": {
+            "unit": "Gb/s",
+            "value": 10
+          },
+          "direction": "bidirectional",
+          "key": "port-2",
+          "medium": "data",
+          "name": "port-2",
+          "protocol": "ethernet"
+        }
+      ],
+      "revision": 1
+    },
+    {
+      "category": "power",
+      "facts": [],
+      "id": "example.pdu",
+      "name": "Power distribution unit",
+      "ports": [
+        {
+          "capacity": {
+            "unit": "kW",
+            "value": 1
+          },
+          "direction": "out",
+          "key": "outlet-1",
+          "medium": "power",
+          "name": "outlet-1"
+        },
+        {
+          "capacity": {
+            "unit": "kW",
+            "value": 1
+          },
+          "direction": "out",
+          "key": "outlet-2",
+          "medium": "power",
+          "name": "outlet-2"
+        }
+      ],
+      "revision": 1
+    }
+  ],
+  "version": 2
+}

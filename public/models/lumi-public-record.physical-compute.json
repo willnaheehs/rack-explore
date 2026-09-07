@@ -1,0 +1,942 @@
+{
+  "assets": [
+    {
+      "evidence": {
+        "asOf": "2024-11-19",
+        "basis": "reported",
+        "sources": [
+          "lumi-facility"
+        ]
+      },
+      "facts": [],
+      "id": "csc-kajaani",
+      "name": "CSC Kajaani · LUMI coverage",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "lumi.site",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-overview"
+        ]
+      },
+      "facts": [],
+      "id": "lumi",
+      "name": "LUMI installation",
+      "parentId": "csc-kajaani",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "lumi.system",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g",
+      "name": "LUMI-G · GPU partition",
+      "parentId": "lumi",
+      "quantity": 2978,
+      "representation": "aggregate",
+      "typeId": "lumi.gpu-nodes",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-c"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-c",
+      "name": "LUMI-C · CPU partition",
+      "parentId": "lumi",
+      "quantity": 2048,
+      "representation": "aggregate",
+      "typeId": "lumi.cpu-nodes",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "derived",
+        "note": "Architecture example, not an additional installed node.",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example",
+      "name": "Representative GPU node",
+      "parentId": "lumi-g",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "lumi.node",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "derived",
+        "note": "Logical assembly boundary; no physical board placement is claimed.",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/board",
+      "name": "Compute assembly",
+      "parentId": "lumi-g/example",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "lumi.board",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-0",
+      "name": "MI250X module 1",
+      "parentId": "lumi-g/example/board",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-0/gcd-0",
+      "name": "Graphics Compute Die 1",
+      "parentId": "lumi-g/example/gpu-0",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x-gcd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-0/gcd-1",
+      "name": "Graphics Compute Die 2",
+      "parentId": "lumi-g/example/gpu-0",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x-gcd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-1",
+      "name": "MI250X module 2",
+      "parentId": "lumi-g/example/board",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-1/gcd-0",
+      "name": "Graphics Compute Die 1",
+      "parentId": "lumi-g/example/gpu-1",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x-gcd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-1/gcd-1",
+      "name": "Graphics Compute Die 2",
+      "parentId": "lumi-g/example/gpu-1",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x-gcd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-2",
+      "name": "MI250X module 3",
+      "parentId": "lumi-g/example/board",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-2/gcd-0",
+      "name": "Graphics Compute Die 1",
+      "parentId": "lumi-g/example/gpu-2",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x-gcd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-2/gcd-1",
+      "name": "Graphics Compute Die 2",
+      "parentId": "lumi-g/example/gpu-2",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x-gcd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-3",
+      "name": "MI250X module 4",
+      "parentId": "lumi-g/example/board",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-3/gcd-0",
+      "name": "Graphics Compute Die 1",
+      "parentId": "lumi-g/example/gpu-3",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x-gcd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-g"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-g/example/gpu-3/gcd-1",
+      "name": "Graphics Compute Die 2",
+      "parentId": "lumi-g/example/gpu-3",
+      "quantity": 1,
+      "representation": "representative",
+      "typeId": "amd.mi250x-gcd",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-overview"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-storage",
+      "name": "Shared storage",
+      "parentId": "lumi",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "lumi.storage",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-network"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-network",
+      "name": "Shared compute and storage fabric",
+      "parentId": "lumi",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "lumi.network",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2024-11-19",
+        "basis": "reported",
+        "sources": [
+          "lumi-facility"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-power",
+      "name": "Electricity supply",
+      "parentId": "csc-kajaani",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "lumi.power",
+      "typeRevision": 1
+    },
+    {
+      "evidence": {
+        "asOf": "2024-11-19",
+        "basis": "reported",
+        "sources": [
+          "lumi-facility"
+        ]
+      },
+      "facts": [],
+      "id": "lumi-heat",
+      "name": "Heat recovery",
+      "parentId": "csc-kajaani",
+      "quantity": 1,
+      "representation": "individual",
+      "typeId": "lumi.heat",
+      "typeRevision": 1
+    }
+  ],
+  "connections": [
+    {
+      "evidence": {
+        "asOf": "2024-11-19",
+        "basis": "reported",
+        "sources": [
+          "lumi-facility"
+        ]
+      },
+      "from": "lumi-power/port/supply",
+      "id": "lumi-electricity",
+      "kind": "logical",
+      "medium": "power",
+      "name": "Reported electricity supply relationship",
+      "quantity": 1,
+      "to": "lumi/port/electricity"
+    },
+    {
+      "evidence": {
+        "asOf": "2024-11-19",
+        "basis": "reported",
+        "sources": [
+          "lumi-facility"
+        ]
+      },
+      "from": "lumi/port/heat",
+      "id": "lumi-heat-reuse",
+      "kind": "logical",
+      "medium": "cooling",
+      "name": "Reported heat reuse relationship",
+      "quantity": 1,
+      "to": "lumi-heat/port/recovered-heat"
+    }
+  ],
+  "description": "Documented compute partitions and shared services at CSC Kajaani. This record is partial: cabinet positions, individual serial numbers, power distribution and pipe routing are unknown. It does not describe every system at the CSC site.",
+  "format": "physical-compute",
+  "groups": [
+    {
+      "assetIds": [
+        "lumi-g",
+        "lumi-c",
+        "lumi-storage",
+        "lumi-network"
+      ],
+      "id": "lumi-compute-services",
+      "name": "LUMI shared services"
+    }
+  ],
+  "id": "lumi-public-record",
+  "interfaces": [
+    {
+      "assetId": "lumi",
+      "count": 1,
+      "direction": "in",
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-overview"
+        ]
+      },
+      "id": "lumi/port/electricity",
+      "key": "electricity",
+      "kind": "physical",
+      "medium": "power",
+      "name": "electricity"
+    },
+    {
+      "assetId": "lumi",
+      "count": 1,
+      "direction": "out",
+      "evidence": {
+        "asOf": "2026-09-07",
+        "basis": "reported",
+        "sources": [
+          "lumi-overview"
+        ]
+      },
+      "id": "lumi/port/heat",
+      "key": "heat",
+      "kind": "physical",
+      "medium": "cooling",
+      "name": "heat"
+    },
+    {
+      "assetId": "lumi-power",
+      "count": 1,
+      "direction": "out",
+      "evidence": {
+        "asOf": "2024-11-19",
+        "basis": "reported",
+        "sources": [
+          "lumi-facility"
+        ]
+      },
+      "id": "lumi-power/port/supply",
+      "key": "supply",
+      "kind": "physical",
+      "medium": "power",
+      "name": "supply"
+    },
+    {
+      "assetId": "lumi-heat",
+      "count": 1,
+      "direction": "in",
+      "evidence": {
+        "asOf": "2024-11-19",
+        "basis": "reported",
+        "sources": [
+          "lumi-facility"
+        ]
+      },
+      "id": "lumi-heat/port/recovered-heat",
+      "key": "recovered-heat",
+      "kind": "physical",
+      "medium": "cooling",
+      "name": "recovered-heat"
+    }
+  ],
+  "purpose": "reference",
+  "sources": [
+    {
+      "id": "lumi-g",
+      "license": "CC BY 4.0 — LUMI documentation",
+      "retrievedAt": "2026-09-07",
+      "title": "LUMI-G hardware documentation",
+      "url": "https://docs.lumi-supercomputer.eu/hardware/lumig/"
+    },
+    {
+      "id": "lumi-c",
+      "license": "CC BY 4.0 — LUMI documentation",
+      "retrievedAt": "2026-09-07",
+      "title": "LUMI-C hardware documentation",
+      "url": "https://docs.lumi-supercomputer.eu/hardware/lumic/"
+    },
+    {
+      "id": "lumi-network",
+      "license": "CC BY 4.0 — LUMI documentation",
+      "retrievedAt": "2026-09-07",
+      "title": "LUMI network and interconnect",
+      "url": "https://docs.lumi-supercomputer.eu/hardware/network/"
+    },
+    {
+      "id": "lumi-overview",
+      "license": "CC BY 4.0 — LUMI documentation",
+      "retrievedAt": "2026-09-07",
+      "title": "LUMI hardware overview",
+      "url": "https://docs.lumi-supercomputer.eu/hardware/"
+    },
+    {
+      "id": "lumi-facility",
+      "retrievedAt": "2026-09-07",
+      "title": "LUMI: location, electricity and heat reuse (19 November 2024)",
+      "url": "https://lumi-supercomputer.eu/honors-in-2024-hpcwire-readers-and-editors-choice-awards/"
+    }
+  ],
+  "title": "LUMI · public record",
+  "types": [
+    {
+      "category": "site",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2024-11-19",
+            "basis": "reported",
+            "sources": [
+              "lumi-facility"
+            ]
+          },
+          "key": "location.city",
+          "label": "Location",
+          "value": "Kajaani, Finland"
+        },
+        {
+          "evidence": {
+            "asOf": "2024-11-19",
+            "basis": "reported",
+            "sources": [
+              "lumi-facility"
+            ]
+          },
+          "key": "coverage.scope",
+          "label": "Coverage",
+          "value": "LUMI only; other CSC installations are outside this record."
+        }
+      ],
+      "id": "lumi.site",
+      "name": "CSC Kajaani site",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "generic",
+      "facts": [
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "layout.positions",
+          "label": "Cabinet positions",
+          "value": null
+        }
+      ],
+      "id": "lumi.system",
+      "name": "HPE Cray EX system",
+      "ports": [
+        {
+          "direction": "in",
+          "key": "electricity",
+          "medium": "power",
+          "name": "electricity"
+        },
+        {
+          "direction": "out",
+          "key": "heat",
+          "medium": "cooling",
+          "name": "heat"
+        }
+      ],
+      "revision": 1
+    },
+    {
+      "category": "compute",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-g"
+            ]
+          },
+          "key": "compute.gpusPerNode",
+          "label": "MI250X modules per node",
+          "value": 4
+        },
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-g"
+            ]
+          },
+          "key": "compute.gcdsPerNode",
+          "label": "GPU dies visible to software per node",
+          "value": 8
+        },
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-g"
+            ]
+          },
+          "key": "compute.cpu",
+          "label": "CPU per node",
+          "value": "AMD EPYC 7A53, 64 cores"
+        },
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-g"
+            ]
+          },
+          "key": "memory.host",
+          "label": "Host memory per node",
+          "unit": "GiB",
+          "value": 512
+        }
+      ],
+      "id": "lumi.gpu-nodes",
+      "name": "LUMI-G GPU nodes",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "compute",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-c"
+            ]
+          },
+          "key": "compute.cpu",
+          "label": "CPUs per node",
+          "value": "2 × AMD EPYC 7763"
+        },
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-c"
+            ]
+          },
+          "key": "compute.coresPerNode",
+          "label": "Cores per node",
+          "value": 128
+        },
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-c"
+            ]
+          },
+          "key": "memory.population",
+          "label": "Host memory populations",
+          "value": "1,888 × 256 GiB; 128 × 512 GiB; 32 × 1,024 GiB"
+        }
+      ],
+      "id": "lumi.cpu-nodes",
+      "name": "LUMI-C CPU nodes",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "compute",
+      "facts": [],
+      "id": "lumi.node",
+      "name": "LUMI-G node architecture",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "component",
+      "facts": [
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "geometry.board",
+          "label": "Exact board geometry",
+          "value": null
+        }
+      ],
+      "id": "lumi.board",
+      "name": "Compute assembly",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "component",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-g"
+            ]
+          },
+          "key": "memory.hbm",
+          "label": "HBM per physical module",
+          "unit": "GB",
+          "value": 128
+        },
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-g"
+            ]
+          },
+          "key": "compute.dies",
+          "label": "Graphics Compute Dies per module",
+          "value": 2
+        }
+      ],
+      "id": "amd.mi250x",
+      "name": "AMD Instinct MI250X",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "component",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-g"
+            ]
+          },
+          "key": "memory.hbm",
+          "label": "HBM per die",
+          "unit": "GB",
+          "value": 64
+        }
+      ],
+      "id": "amd.mi250x-gcd",
+      "name": "Graphics Compute Die",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "storage",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "derived",
+            "sources": [
+              "lumi-network",
+              "lumi-overview"
+            ]
+          },
+          "key": "storage.services",
+          "label": "Services",
+          "value": "Lustre disk, Lustre flash and object storage"
+        },
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "storage.inventory",
+          "label": "Drive and enclosure inventory",
+          "value": null
+        }
+      ],
+      "id": "lumi.storage",
+      "name": "Shared storage services",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "network",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-network"
+            ]
+          },
+          "key": "network.topology",
+          "label": "Topology",
+          "value": "Dragonfly"
+        },
+        {
+          "evidence": {
+            "asOf": "2026-09-07",
+            "basis": "reported",
+            "sources": [
+              "lumi-network"
+            ]
+          },
+          "key": "network.rate",
+          "label": "Endpoint line rate",
+          "unit": "Gb/s",
+          "value": 200
+        },
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "network.cables",
+          "label": "Numbered cable schedule",
+          "value": null
+        }
+      ],
+      "id": "lumi.network",
+      "name": "HPE Slingshot 11",
+      "ports": [],
+      "revision": 1
+    },
+    {
+      "category": "power",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2024-11-19",
+            "basis": "reported",
+            "sources": [
+              "lumi-facility"
+            ]
+          },
+          "key": "power.source",
+          "label": "Reported energy source",
+          "value": "Hydropower"
+        },
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "power.distribution",
+          "label": "Feeder and switchgear inventory",
+          "value": null
+        }
+      ],
+      "id": "lumi.power",
+      "name": "Electricity supply",
+      "ports": [
+        {
+          "direction": "out",
+          "key": "supply",
+          "medium": "power",
+          "name": "supply"
+        }
+      ],
+      "revision": 1
+    },
+    {
+      "category": "cooling",
+      "facts": [
+        {
+          "evidence": {
+            "asOf": "2024-11-19",
+            "basis": "reported",
+            "sources": [
+              "lumi-facility"
+            ]
+          },
+          "key": "cooling.destination",
+          "label": "Reported heat destination",
+          "value": "City of Kajaani"
+        },
+        {
+          "evidence": {
+            "basis": "unknown",
+            "note": "Not established by this record.",
+            "sources": []
+          },
+          "key": "cooling.routing",
+          "label": "Cooling loop and pipe routing",
+          "value": null
+        }
+      ],
+      "id": "lumi.heat",
+      "name": "Heat reuse",
+      "ports": [
+        {
+          "direction": "in",
+          "key": "recovered-heat",
+          "medium": "cooling",
+          "name": "recovered-heat"
+        }
+      ],
+      "revision": 1
+    }
+  ],
+  "version": 2
+}

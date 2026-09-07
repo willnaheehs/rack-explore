@@ -10,9 +10,11 @@
     "build": "vinext build",
     "prestart": "npm run build",
     "start": "wrangler dev --config dist/server/wrangler.json",
-    "lint": "oxlint app lib components/explorer.tsx components/cluster-scene.tsx components/topology.tsx components/reference-topology.tsx components/catalog-panel.tsx components/rack-builder.tsx components/power-view.tsx components/power-scene.tsx components/configuration-checks.tsx",
+    "lint": "oxlint app lib scripts components/explorer.tsx components/cluster-scene.tsx components/topology.tsx components/reference-topology.tsx components/catalog-panel.tsx components/rack-builder.tsx components/power-view.tsx components/power-scene.tsx components/configuration-checks.tsx components/infrastructure-workspace.tsx",
     "format": "oxfmt",
-    "test": "node --experimental-strip-types --test tests/*.test.mjs"
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "models:check": "node --experimental-strip-types scripts/check-model.mjs",
+    "models:examples": "node --experimental-strip-types scripts/write-model-examples.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

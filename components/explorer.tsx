@@ -37,6 +37,7 @@ import {
   Cable,
   Check,
   Info,
+  Building2,
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
@@ -79,6 +80,7 @@ import {
 } from '@/lib/catalog';
 import { validateConfiguration } from '@/lib/config-validation';
 import ConfigurationChecks from './configuration-checks';
+import InfrastructureWorkspace from './infrastructure-workspace';
 import { blankModel, cloneForBuilder, totals } from '@/lib/rack-builder';
 import ClusterScene, { type CameraCommand } from './cluster-scene';
 import {
@@ -145,6 +147,8 @@ export default function Explorer() {
   );
   const [catalog, setCatalog] = useState(false),
     [builder, setBuilder] = useState(false);
+  const [infrastructureOpen, setInfrastructureOpen] = useState(false);
+  const [infrastructureStarted, setInfrastructureStarted] = useState(false);
   const [draft, setDraft] = useState<ClusterModel>(blankModel),
     [builderProfile, setBuilderProfile] = useState<Profile | null>(null);
   const [service, setService] = useState(false),
@@ -187,6 +191,14 @@ export default function Explorer() {
   const [topologyPresentation, setTopologyPresentation] = useState<
     'rack' | 'reference'
   >('rack');
+
+  const openInfrastructure = useCallback(() => {
+    setInfrastructureStarted(true);
+    setInfrastructureOpen(true);
+    setView('physical');
+    setMobileInspector(false);
+    setMobileInventory(false);
+  }, []);
 
   const openPower = useCallback((rackId: string) => {
     setPowerRackId(rackId);
@@ -285,7 +297,8 @@ export default function Explorer() {
         !docs &&
         !mobileInspector &&
         !catalog &&
-        !builder
+        !builder &&
+        !infrastructureOpen
       )
         reset();
       if (
@@ -295,7 +308,8 @@ export default function Explorer() {
         !docs &&
         !mobileInspector &&
         !catalog &&
-        !builder
+        !builder &&
+        !infrastructureOpen
       ) {
         e.preventDefault();
         camera('fit');
@@ -303,7 +317,7 @@ export default function Explorer() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [reset, docs, mobileInspector, catalog, builder]);
+  }, [reset, docs, mobileInspector, catalog, builder, infrastructureOpen]);
   const stateRef = useRef<ExplorerState>({
     selected,
     node,
@@ -336,12 +350,14 @@ export default function Explorer() {
     isolated,
   ]);
   useEffect(() => {
+    if (infrastructureOpen) return;
     const context = (document as Document & { modelContext?: ModelContext })
       .modelContext;
     if (!context?.registerTool) return;
     const lifecycle = new AbortController();
     const actions = {
       read: () => stateRef.current,
+      showInfrastructure: () => flushSync(openInfrastructure),
       inspect: (id: string) => {
         flushSync(() => {
           select(id);
@@ -379,7 +395,7 @@ export default function Explorer() {
       }
     }
     return () => lifecycle.abort();
-  }, [select, openPower]);
+  }, [select, openPower, infrastructureOpen, openInfrastructure]);
   const inspector = (mobile = false) => (
     <>
       <div className="inspector-heading">
@@ -866,6 +882,15 @@ export default function Explorer() {
           <span>{model.title}</span>
         </div>
         <div className="header-actions">
+          <button
+            className="quiet-button infrastructure-header-button"
+            aria-label="Explore infrastructure"
+            title="Infrastructure"
+            onClick={openInfrastructure}
+          >
+            <Building2 size={16} />
+            <span>Infrastructure</span>
+          </button>
           <button
             className="quiet-button"
             aria-label="Open hardware catalog"
@@ -1367,6 +1392,24 @@ export default function Explorer() {
           setBuilder(true);
         }}
       />
+      {infrastructureStarted && (
+        <InfrastructureWorkspace
+          open={infrastructureOpen}
+          onOpenChange={setInfrastructureOpen}
+          currentModel={model}
+          onInspect={(next, id) => {
+            loadModel(next);
+            const item = id ? lookupHardware(id, next) : undefined;
+            if (item) {
+              setSelected(item.id);
+              setNode(item.parent ?? null);
+              setIsolated(!!item.parent);
+              setDetailTab('overview');
+              if (window.innerWidth < 1100) setMobileInspector(true);
+            }
+          }}
+        />
+      )}
       {builder && (
         <RackBuilder
           key={builderProfile?.id ?? 'builder'}

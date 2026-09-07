@@ -4,6 +4,7 @@ An interactive HPC hardware explorer built with React, Vinext, Three.js, and the
 
 ## Use
 
+- Open **Infrastructure** to navigate sites, rooms, racks and nested equipment with breadcrumbs, searchable records, connections and source evidence. Try the small CPU cluster plan, GB300 NVL72 reference or sourced LUMI public record. Supported racks link into the existing 3D inspector.
 - Orbit, zoom, select a chassis, then **Explore components**.
 - Remove bezels and switch between assembled and exploded internal views. Selecting an internal module isolates it for inspection; **Full assembly** restores all modules and **Nearby parts** shows its context. Fan, PSU, memory, drive and I/O groups have separate service-view positions; the camera fits their bounds on narrow and wide screens.
 - The original eight-node H100 cluster retains all four racks, inspectable hardware interiors and physical fabric layers. **Topology → Rack connections** shows every device in that layout; **Vendor reference** opens the separately sourced SuperPOD plan. Copying the cluster into the custom builder preserves its connections.
@@ -48,6 +49,8 @@ npm run build
 
 ## Data and fidelity
 
+Infrastructure uses a versioned, self-contained JSON format with stable asset IDs, pinned equipment definitions and typed interfaces. **Import** accepts both existing rack files and the new format; **Export** preserves definitions, evidence and connections. Imported infrastructure stays in memory until exported. The workspace provides inspection and file exchange; the rack builder remains the editor for supported layouts. Public aggregate counts and representative components are explicitly distinguished from identified installed equipment. See [the format and reproducibility guide](docs/infrastructure-format.md), and run `npm run models:check` to validate the included examples or `npm run models:check -- /path/to/model.json` for your own file.
+
 The catalog was reviewed on 6 September 2026. Every platform links to official manufacturer references in the inspector. `Documented` means a manufacturer reference exists, not a stock or shipping guarantee. Vera Rubin NVL72 and AMD Helios are preliminary references and cannot populate a rack.
 
 Published U heights, selected dimensions, device populations, and port arrangements inform the models. Exact OEM depth is labeled illustrative when unavailable. Board geometry, package layouts, traces, heatsinks, cabinets, LEDs, and cable paths are explanatory geometry, not certified service CAD or live telemetry. DDN controller details and media population are explicitly representative because the public data sheet does not identify the exact boards or drive configuration. The DDN cluster uses a 250 TB usable option; representative drive glyphs must not be interpreted as its actual drive count.
@@ -68,6 +71,8 @@ Facility voltages, equal feed sharing, usable feed current, efficiencies, batter
 
 ## Structure
 
+- `lib/infrastructure.ts`: portable definitions, assets, interfaces, evidence and validation; `infrastructure-adapter.ts` preserves existing rack models; `infrastructure-examples.ts` holds fixed planning and public records.
+- `components/infrastructure-workspace.tsx`, `app/infrastructure.css`: assembly navigation, source inspection and portable file exchange; `lib/infrastructure-tools.ts` exposes the same navigation through page tools.
 - `lib/catalog.ts`: source-linked chassis profiles and internal component definitions.
 - `lib/hardware.ts`: reference cluster, IDs, inspection data and links.
 - `lib/rack-builder.ts`: pure placement, connection and import/export validation.

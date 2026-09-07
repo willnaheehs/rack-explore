@@ -26,6 +26,7 @@ export type ExplorerActions = {
   read: () => ExplorerState;
   inspect: (id: string) => void;
   showPower?: (rackId: string) => void;
+  showInfrastructure?: () => void;
   showFabric: (
     fabric: 'compute' | 'frontend' | 'storage',
     platform?: ClusterModel,
@@ -87,6 +88,31 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
       ),
     );
   return [
+    ...(actions.showInfrastructure
+      ? [
+          {
+            name: 'open_infrastructure',
+            title: 'Open infrastructure',
+            description:
+              'Open the infrastructure workspace for recursive assemblies, typed connections, versioned file import/export and evidence. Infrastructure tools replace the rack tools while this workspace is open.',
+            inputSchema: {
+              type: 'object',
+              properties: {},
+              additionalProperties: false,
+            },
+            annotations: { readOnlyHint: false, untrustedContentHint: true },
+            execute(input: unknown) {
+              if (Object.keys(objectInput(input)).length)
+                throw new Error('No arguments expected.');
+              actions.showInfrastructure!();
+              return {
+                opened: 'infrastructure',
+                next: 'Read get_infrastructure_model for the current record and available examples.',
+              };
+            },
+          },
+        ]
+      : []),
     {
       name: 'get_cluster_model',
       title: 'Read cluster hardware',
