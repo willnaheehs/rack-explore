@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
+    "prestart": "npm run build",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint app lib components/explorer.tsx components/cluster-scene.tsx components/topology.tsx components/reference-topology.tsx components/catalog-panel.tsx components/rack-builder.tsx components/power-view.tsx components/power-scene.tsx components/configuration-checks.tsx",
     "format": "oxfmt",
