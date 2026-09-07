@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { VISIBLE_CATALOG, profileFor } from '../lib/catalog.ts';
-import { DEFAULT_MODEL, fabricInfo, resolveHardware } from '../lib/hardware.ts';
+import {
+  DEFAULT_MODEL,
+  fabricInfo,
+  resolveHardware,
+  childrenOf,
+  linksFor,
+} from '../lib/hardware.ts';
 import { withReferenceFabrics } from '../lib/fabric-references.ts';
 import {
   modelForProfile,
@@ -52,6 +58,102 @@ test('all presets have source-backed coverage without manufactured hardware or p
       }
     }
   }
+});
+test('the original H100 cluster retains its full rack build, connections and component inspection with vendor references attached', () => {
+  const model = withReferenceFabrics(DEFAULT_MODEL);
+  assert.equal(model.racks.length, 4);
+  assert.equal(model.hardware.length, 28);
+  assert.deepEqual(model.hardware, DEFAULT_MODEL.hardware);
+  assert.deepEqual(model.racks, DEFAULT_MODEL.racks);
+  for (const [fabric, count] of [
+    ['compute', 320],
+    ['frontend', 18],
+    ['storage', 48],
+  ]) {
+    assert.equal(
+      model.links
+        .filter((l) => l.fabric === fabric)
+        .reduce((n, l) => n + l.count, 0),
+      count,
+    );
+    assert.ok(model.fabricReferences[fabric].sources.length);
+  }
+  for (const h of model.hardware) {
+    assert.ok(linksFor(h, model).length, h.id);
+    assert.deepEqual(
+      childrenOf(h),
+      childrenOf(resolveHardware(h.id, DEFAULT_MODEL)),
+    );
+    for (const c of childrenOf(h))
+      assert.deepEqual(resolveHardware(c.id, model), c);
+  }
+  assert.equal(
+    linksFor(resolveHardware('dgx-01/gpu-0', model), model).length,
+    12,
+  );
+  assert.equal(
+    linksFor(resolveHardware('ddn-01/controller-0', model), model).length,
+    2,
+  );
+  const copy = cloneForBuilder(model),
+    restored = importModel(exportModel(copy));
+  assert.equal(restored.links.length, DEFAULT_MODEL.links.length);
+  assert.equal(restored.hardware.length, DEFAULT_MODEL.hardware.length);
+  assert.equal(copy.fabricReferences, undefined);
+});
+test('structured fabric navigation can select the full rack topology or its sourced reference without losing hardware', () => {
+  let state = {
+    model: withReferenceFabrics(DEFAULT_MODEL),
+    selected: null,
+    node: null,
+    view: 'physical',
+    fabric: 'compute',
+    topologyPresentation: 'rack',
+  };
+  const tools = explorerTools({
+    read: () => state,
+    inspect: (id) => {
+      state = {
+        ...state,
+        selected: id,
+        node: id.includes('/') ? id.split('/')[0] : null,
+        view: 'physical',
+      };
+    },
+    showFabric: (fabric, platform, presentation) => {
+      state = {
+        ...state,
+        fabric,
+        view: 'topology',
+        model: platform ?? state.model,
+        topologyPresentation: presentation ?? state.topologyPresentation,
+      };
+    },
+  });
+  const show = tools.find((t) => t.name === 'show_cluster_fabric');
+  for (const presentation of ['reference', 'rack']) {
+    const result = show.execute({ fabric: 'storage', presentation });
+    assert.equal(result.state.topologyPresentation, presentation);
+    assert.equal(result.connections.length, 24);
+    assert.ok(result.reference.sources.length);
+  }
+  const inspector = tools.find((t) => t.name === 'inspect_cluster_hardware');
+  const storage = inspector.execute({ id: 'ddn-01/controller-0' });
+  assert.equal(storage.state.node, 'ddn-01');
+  assert.equal(storage.connections.length, 2);
+  const before = structuredClone(state);
+  for (const presentation of ['invalid', null, {}])
+    assert.throws(() => show.execute({ fabric: 'compute', presentation }));
+  assert.throws(
+    () =>
+      show.execute({
+        fabric: 'compute',
+        platformId: 'dgx-b300',
+        presentation: 'rack',
+      }),
+    /no configured/,
+  );
+  assert.deepEqual(state, before);
 });
 test('NVIDIA generations retain distinct rails, protocols and shared I/O counts', () => {
   for (const [id, rails, rate] of [

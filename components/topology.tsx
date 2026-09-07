@@ -5,6 +5,7 @@ import ReferenceTopology from './reference-topology';
 import { MousePointer2, Network, Minus, Plus } from 'lucide-react';
 import {
   fabricInfo,
+  FABRICS,
   NODES,
   LEAVES,
   SPINES,
@@ -16,7 +17,7 @@ import {
   type Hardware,
 } from '@/lib/hardware';
 type Placed = { item: Hardware; x: number; y: number; subtitle: string };
-function CustomTopology({
+function RackTopology({
   model,
   fabric,
   selected,
@@ -30,7 +31,7 @@ function CustomTopology({
   const LINKS = model.links;
   const [hovered, setHovered] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
-  const f = fabricInfo(model, fabric);
+  const f = FABRICS[fabric];
   const focus = hovered ?? selected?.split('/')[0] ?? null;
   const { placed, headings } = useMemo(() => {
     const placed: Placed[] = [];
@@ -171,7 +172,7 @@ function CustomTopology({
           <h1>{f.name}</h1>
           <p>
             {model.id === 'h100-cluster'
-              ? f.description
+              ? `The eight-node rack layout. ${f.description} Select any device to inspect its hardware.`
               : model.racks.some((r) => r.mount === 'NVL72')
                 ? 'The rack’s internal NVLink domain is separate from external compute, front-end and storage fabrics. No external fabric has been configured.'
                 : 'Connections reflect your planned layout. No links are inferred from placement.'}
@@ -403,9 +404,14 @@ function CustomTopology({
   );
 }
 
-export default function Topology(props: Parameters<typeof CustomTopology>[0]) {
+export default function Topology({
+  presentation,
+  ...props
+}: Parameters<typeof RackTopology>[0] & {
+  presentation: 'rack' | 'reference';
+}) {
   const reference = props.model.fabricReferences?.[props.fabric];
-  return reference ? (
+  return reference && presentation === 'reference' ? (
     <ReferenceTopology
       key={`${props.model.id}-${props.fabric}`}
       plan={reference}
@@ -413,6 +419,6 @@ export default function Topology(props: Parameters<typeof CustomTopology>[0]) {
       onInspect={props.onSelect}
     />
   ) : (
-    <CustomTopology {...props} />
+    <RackTopology {...props} />
   );
 }

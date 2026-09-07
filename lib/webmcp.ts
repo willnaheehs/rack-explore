@@ -1,5 +1,6 @@
 import { modelForProfile } from './rack-builder.ts';
 import { VISIBLE_CATALOG } from './catalog.ts';
+import { withReferenceFabrics } from './fabric-references.ts';
 import {
   FABRICS,
   fabricInfo,
@@ -15,6 +16,7 @@ export type ExplorerState = {
   view: string;
   fabric: string;
   model: ClusterModel;
+  topologyPresentation?: 'rack' | 'reference';
   powerRackId?: string;
 };
 export type ExplorerActions = {
@@ -24,6 +26,7 @@ export type ExplorerActions = {
   showFabric: (
     fabric: 'compute' | 'frontend' | 'storage',
     platform?: ClusterModel,
+    presentation?: 'rack' | 'reference',
   ) => void;
 };
 type Tool = {
@@ -166,12 +169,13 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
       name: 'show_cluster_fabric',
       title: 'Show network fabric',
       description:
-        'Open the compute, front-end Ethernet, or storage topology. Optionally load a documented platform from get_cluster_model.availablePlatforms with its sourced reference connection plans. Interface-only plans explicitly report missing wiring details.',
+        'Open the compute, front-end Ethernet, or storage topology. Choose rack for the existing device connections or reference for the vendor plan. Optionally load a documented platform from get_cluster_model.availablePlatforms. Interface-only plans explicitly report missing wiring details.',
       inputSchema: {
         type: 'object',
         properties: {
           fabric: { type: 'string', enum: ['compute', 'frontend', 'storage'] },
           platformId: { type: 'string' },
+          presentation: { type: 'string', enum: ['rack', 'reference'] },
         },
         required: ['fabric'],
         additionalProperties: false,
@@ -181,7 +185,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
         const values = objectInput(input);
         if (
           Object.keys(values).some(
-            (k) => k !== 'fabric' && k !== 'platformId',
+            (k) => !['fabric', 'platformId', 'presentation'].includes(k),
           ) ||
           !['compute', 'frontend', 'storage'].includes(String(values.fabric))
         )
@@ -198,12 +202,34 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
           );
         const platform =
           typeof values.platformId === 'string'
-            ? modelForProfile(values.platformId)
+            ? withReferenceFabrics(modelForProfile(values.platformId))
             : undefined;
-        actions.showFabric(fabric, platform);
+        const target = platform ?? actions.read().model;
+        const presentation = values.presentation;
+        if (
+          presentation !== undefined &&
+          presentation !== 'rack' &&
+          presentation !== 'reference'
+        )
+          throw new Error('Presentation must be rack or reference.');
+        if (presentation === 'reference' && !target.fabricReferences)
+          throw new Error('This layout has no vendor reference plan.');
+        if (
+          presentation === 'rack' &&
+          target.fabricReferences &&
+          !target.links.length
+        )
+          throw new Error('This platform has no configured rack connections.');
+        actions.showFabric(fabric, platform, presentation);
         return {
           state: snapshot(),
-          fabric: fabricInfo(actions.read().model, fabric),
+          fabric:
+            actions.read().topologyPresentation === 'rack'
+              ? FABRICS[fabric]
+              : fabricInfo(actions.read().model, fabric),
+          connections: actions
+            .read()
+            .model.links.filter((l) => l.fabric === fabric),
           reference: actions.read().model.fabricReferences?.[fabric] ?? null,
         };
       },

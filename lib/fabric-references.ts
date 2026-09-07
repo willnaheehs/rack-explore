@@ -870,5 +870,6 @@ export function referenceFabricsFor(
 }
 export function withReferenceFabrics(model: ClusterModel): ClusterModel {
   if (model.custom || model.fabricReferences) return model;
-  return { ...model, links: [], fabricReferences: referenceFabricsFor(model) };
+  // Attach documentation without erasing the rack layout's authored connections.
+  return { ...model, fabricReferences: referenceFabricsFor(model) };
 }

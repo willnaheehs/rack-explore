@@ -158,6 +158,9 @@ export default function Explorer() {
   });
   const [detailTab, setDetailTab] = useState('overview');
   const [topologyFabric, setTopologyFabric] = useState<Fabric>('compute');
+  const [topologyPresentation, setTopologyPresentation] = useState<
+    'rack' | 'reference'
+  >('rack');
 
   const openPower = useCallback((rackId: string) => {
     setPowerRackId(rackId);
@@ -195,6 +198,11 @@ export default function Explorer() {
   const loadModel = (next: ClusterModel) => {
     const displayed = withReferenceFabrics(next);
     setModel(displayed);
+    setTopologyPresentation(
+      displayed.links.length || !displayed.fabricReferences
+        ? 'rack'
+        : 'reference',
+    );
     setPowerRackId(undefined);
     setSelected(null);
     setNode(null);
@@ -264,6 +272,7 @@ export default function Explorer() {
     node,
     view,
     fabric: topologyFabric,
+    topologyPresentation,
     model,
     powerRackId,
   });
@@ -273,10 +282,19 @@ export default function Explorer() {
       node,
       view,
       fabric: topologyFabric,
+      topologyPresentation,
       model,
       powerRackId,
     };
-  }, [selected, node, view, topologyFabric, model, powerRackId]);
+  }, [
+    selected,
+    node,
+    view,
+    topologyFabric,
+    topologyPresentation,
+    model,
+    powerRackId,
+  ]);
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext })
       .modelContext;
@@ -295,9 +313,14 @@ export default function Explorer() {
           openPower(rackId);
         });
       },
-      showFabric: (fabric: Fabric, platform?: ClusterModel) => {
+      showFabric: (
+        fabric: Fabric,
+        platform?: ClusterModel,
+        presentation?: 'rack' | 'reference',
+      ) => {
         flushSync(() => {
           if (platform) loadModel(platform);
+          if (presentation) setTopologyPresentation(presentation);
           setTopologyFabric(fabric);
           setView('topology');
         });
@@ -513,8 +536,10 @@ export default function Explorer() {
                 <div>
                   <span>{f.name}</span>
                   <small>
-                    {model.fabricReferences?.[key as Fabric]?.status ??
-                      `${model.links.filter((l) => l.fabric === key).reduce((n, l) => n + l.count, 0)} planned links`}
+                    {model.links.some((l) => l.fabric === key)
+                      ? `${model.links.filter((l) => l.fabric === key).reduce((n, l) => n + l.count, 0)} rack links`
+                      : (model.fabricReferences?.[key as Fabric]?.status ??
+                        'No planned links')}
                   </small>
                 </div>
                 <ArrowUpRight size={15} />
@@ -684,8 +709,9 @@ export default function Explorer() {
             <div className="reference-sidebar-note">
               <strong>Sourced connection plans</strong>
               <p>
-                Open a fabric to inspect its documented ports, topology and
-                sources.
+                {model.links.length
+                  ? 'Trace rack connections in 3D. Topology also includes the vendor reference plans.'
+                  : 'Open a fabric to inspect its documented ports, topology and sources.'}
               </p>
             </div>
           )}
@@ -694,7 +720,7 @@ export default function Explorer() {
             <Layers3 size={15} />
             <span>FABRIC LAYERS</span>
           </div>
-          {model.fabricReferences ? (
+          {model.fabricReferences && !model.links.length ? (
             Object.entries(FABRICS).map(([key, f]) => (
               <button
                 className={`reference-fabric-button ${view === 'topology' && topologyFabric === key ? 'active' : ''}`}
@@ -738,7 +764,7 @@ export default function Explorer() {
             </>
           )}
           <div className="layer-note">
-            {model.fabricReferences
+            {model.fabricReferences && !model.links.length
               ? 'Connection plans in Topology'
               : 'Physical view · planned cable paths'}
           </div>
@@ -889,15 +915,49 @@ export default function Explorer() {
                   </button>
                 ))}
               </div>
-              {Topology ? (
+              {model.links.length && model.fabricReferences ? (
+                <Tabs
+                  className="topology-presentation"
+                  value={topologyPresentation}
+                  onValueChange={(value) =>
+                    setTopologyPresentation(value as 'rack' | 'reference')
+                  }
+                >
+                  {!!model.links.length && model.fabricReferences && (
+                    <TabsList
+                      aria-label="Topology detail"
+                      className="topology-presentation-tabs"
+                    >
+                      <TabsTrigger value="rack">Rack connections</TabsTrigger>
+                      <TabsTrigger value="reference">
+                        Vendor reference
+                      </TabsTrigger>
+                    </TabsList>
+                  )}
+                  {(['rack', 'reference'] as const).map((presentation) => (
+                    <TabsContent
+                      key={presentation}
+                      value={presentation}
+                      className="topology-presentation-content"
+                    >
+                      <Topology
+                        model={model}
+                        fabric={topologyFabric}
+                        selected={selected}
+                        onSelect={select}
+                        presentation={presentation}
+                      />
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              ) : (
                 <Topology
                   model={model}
                   fabric={topologyFabric}
                   selected={selected}
                   onSelect={select}
+                  presentation={model.fabricReferences ? 'reference' : 'rack'}
                 />
-              ) : (
-                <p className="loading-graph">Preparing topology…</p>
               )}
             </div>
           )}
@@ -927,9 +987,11 @@ export default function Explorer() {
                 <p>
                   {node
                     ? 'Select any module to inspect its role and specifications.'
-                    : model.fabricReferences
-                      ? 'Inspect a chassis, or open a fabric to follow its documented connection plan.'
-                      : 'Select a chassis. Open it. Follow the hardware.'}
+                    : model.links.length
+                      ? 'Select a chassis to explore its components. Toggle fabric layers to trace the rack connections.'
+                      : model.fabricReferences
+                        ? 'Inspect a chassis, or open a fabric to follow its documented connection plan.'
+                        : 'Select a chassis. Open it. Follow the hardware.'}
                 </p>
               </div>
               <div className="assembly-controls">
@@ -1084,6 +1146,12 @@ export default function Explorer() {
               front-end paths refer to the same physical network. Custom
               connections remain user-defined.
             </p>
+            <p>
+              The original eight-node H100 cluster retains its four-rack layout,
+              physical cable layers and selectable rack topology. Its rack
+              connections are an illustrative layout; the Vendor reference tab
+              provides the separately sourced SuperPOD design.
+            </p>
             <h3>Custom racks</h3>
             <p>
               The builder checks rack-unit boundaries, overlap, mounting family
@@ -1202,7 +1270,7 @@ function Connections({
 }) {
   const resolveHardware = (id: string | null) => lookupHardware(id, model);
   const links = linksFor(h, model);
-  if (model.fabricReferences)
+  if (model.fabricReferences && !model.links.length)
     return (
       <div className="connections-panel">
         <p className="connection-note">
@@ -1229,6 +1297,12 @@ function Connections({
     );
   return (
     <div className="connections-panel">
+      {model.fabricReferences && (
+        <p className="connection-note">
+          Connections in this rack layout. Open a fabric, then Vendor reference
+          for the documented design and port details.
+        </p>
+      )}
       {h.parent && (
         <div className="connection-note">
           External connections belong to {resolveHardware(h.parent)?.name}.{' '}

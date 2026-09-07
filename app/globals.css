@@ -1479,6 +1479,26 @@ a {
   min-height: 0;
   padding-top: 22px;
 }
+.topology-presentation {
+  flex: 1;
+  min-height: 0;
+}
+.topology-presentation-tabs {
+  margin-top: 14px;
+}
+.topology-presentation-tabs [data-slot='tabs-trigger'] {
+  font-size: 14px;
+  padding-inline: 14px;
+}
+.topology-presentation-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+.topology-presentation-content[hidden] {
+  display: none;
+}
 .topology-heading {
   display: flex;
   align-items: flex-start;
