@@ -567,12 +567,24 @@ export default function ClusterScene(props: Props) {
           0.465,
         );
         const fc = pr.parts.find((p) => p.kind === 'fan')?.count;
-        if (fc) fanGrid(rear, 1, fc, 0.32, H * 0.82, 0, 0.018);
+        const psus = pr.parts.find((p) => p.kind === 'psu')?.count ?? 2;
+        if (fc)
+          fanGrid(
+            rear,
+            psus > 2 ? 2 : 1,
+            psus > 2 ? Math.ceil(fc / 2) : fc,
+            0.32,
+            H * (psus > 2 ? 0.52 : 0.82),
+            psus > 2 ? H * 0.18 : 0,
+            0.018,
+          );
         else grille(0.32, H * 0.75, '#444c4f', rear, 0, 0, 0.019);
-        for (const xx of [-0.2, 0.2]) {
-          box(0.055, H * 0.85, 0.03, steel, xx, 0, 0.01, rear);
-          box(0.025, 0.02, 0.01, slot, xx, 0, 0.032, rear);
-        }
+        if (psus > 2) psuGrid(rear, psus, 2, 0.42, H * 0.32, -H * 0.3, 0.018);
+        else
+          for (const xx of [-0.2, 0.2]) {
+            box(0.055, H * 0.85, 0.03, steel, xx, 0, 0.01, rear);
+            box(0.025, 0.02, 0.01, slot, xx, 0, 0.032, rear);
+          }
       } else if (pr.category === 'storage') {
         if (props.service) {
           drives(g, 4, 0.42, H * 0.75, 0, 0.466);
@@ -642,8 +654,9 @@ export default function ClusterScene(props: Props) {
           psuGrid(rear, 8, 1, 0.42, H * 0.18, H * 0.38, 0.016);
           fanGrid(rear, 3, 5, 0.42, H * 0.67, -H * 0.08, 0.02);
         } else if (pr.id === 'dell-xe9780') {
-          fanGrid(rear, 3, 5, 0.42, H * 0.66, H * 0.1, 0.02);
-          ports(rear, 1, 4, 0.33, H * 0.1, 0.025, -H * 0.33);
+          fanGrid(rear, 3, 5, 0.42, H * 0.48, H * 0.18, 0.02);
+          ports(rear, 1, 4, 0.33, H * 0.07, 0.025, -H * 0.13);
+          psuGrid(rear, 12, 2, 0.42, H * 0.25, -H * 0.32, 0.02);
         } else {
           grille(0.43, H * 0.46, '#424b4b', rear, 0, H * 0.23, 0.016);
           ports(
@@ -1017,7 +1030,9 @@ export default function ClusterScene(props: Props) {
         } else if (item.kind === 'nic') {
           const isIO = item.part !== 'nic';
           g.position.set(
-            (i - (same.length - 1) / 2) * 0.052,
+            item.part === 'management'
+              ? 0.12
+              : (i - (same.length - 1) / 2) * 0.052,
             0.31 + spread * (isIO ? 0.28 : 0.17),
             isIO ? 0.35 : -pr.depth * 0.42,
           );
@@ -1089,7 +1104,7 @@ export default function ClusterScene(props: Props) {
           if (!props.exploded) heatSink(g, 0.075, 0.075, 0.03);
         } else if (item.kind === 'port') {
           const cols = pr.ports?.cols ?? 8,
-            r = Math.floor(i / cols);
+            r = Math.floor(i / cols) + (item.part === 'uplink' ? 2 : 0);
           g.position.set(
             (((i % cols) - (cols - 1) / 2) * 0.42) / cols,
             0.25 + r * 0.023 + spread * 0.05,
@@ -1109,13 +1124,32 @@ export default function ClusterScene(props: Props) {
           box(0.04, 0.025, 0.006, slot, 0, 0, -0.072, g);
           box(0.004, 0.028, 0.014, black, 0.025, 0, -0.08, g);
         } else if (item.kind === 'fan') {
-          const cols = Math.min(5, part.count);
-          g.position.set(
-            ((i % cols) - (cols - 1) / 2) * 0.083,
-            0.27 + Math.floor(i / cols) * 0.081 + spread * 0.38,
-            -pr.depth * 0.48,
+          const frontCount = ['dgx-h100', 'dgx-h200', 'dgx-b200'].includes(
+            pr.id,
+          )
+            ? part.count
+            : pr.id === 'lenovo-sr680a-v4'
+              ? 6
+              : 0;
+          const middleCount = pr.id === 'dell-xe9780' ? 5 : 0;
+          const front = i < frontCount,
+            middle = i < middleCount;
+          const index = front || middle ? i : i - frontCount - middleCount;
+          const groupCount = front
+            ? frontCount
+            : middle
+              ? middleCount
+              : part.count - frontCount - middleCount;
+          const cols = Math.min(
+            pr.id === 'lenovo-sr680a-v4' && front ? 6 : 5,
+            groupCount,
           );
-          fan(g, 0, 0, 0, 0.073);
+          g.position.set(
+            ((index % cols) - (cols - 1) / 2) * (0.415 / cols),
+            0.27 + Math.floor(index / cols) * 0.081 + spread * 0.38,
+            pr.depth * (front ? 0.3 : middle ? -0.05 : -0.48),
+          );
+          fan(g, 0, 0, 0, Math.min(0.073, 0.38 / cols));
         }
         if (['gpu', 'cpu', 'controller', 'asic'].includes(item.kind)) {
           const t = caption(item.name, 0.075, 0.015, '#e4efdf');

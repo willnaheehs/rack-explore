@@ -9,6 +9,7 @@ export type Part = {
   description: string;
   specs: Spec[];
   schematic?: boolean;
+  population?: 'fixed' | 'slots' | 'option' | 'representative';
 };
 export type Profile = {
   id: string;
@@ -47,7 +48,17 @@ const part = (
   description: string,
   specs: Spec[] = [],
   schematic = false,
-): Part => ({ key, kind, title, count, model, description, specs, schematic });
+): Part => ({
+  key,
+  kind,
+  title,
+  count,
+  model,
+  description,
+  specs,
+  schematic,
+  population: schematic ? 'representative' : 'fixed',
+});
 const reference = (title: string, url: string): Reference => ({ title, url });
 const urls = {
   h100: 'https://docs.nvidia.com/dgx/dgxh100-user-guide/introduction-to-dgxh100.html',
@@ -300,14 +311,47 @@ const h100 = compute({
       'Separate I/O adapters carry storage and front-end traffic.',
       [spec('Ports', '2 per adapter')],
     ),
+    part(
+      'management',
+      'nic',
+      'In-band management adapter',
+      1,
+      'Dual-port 100GbE · slot 3',
+      'Separate Ethernet interfaces provide in-band system management, alongside the two dual-port ConnectX-7 I/O adapters.',
+      [spec('Ports', '2 × 100 GbE'), spec('Location', 'Host expansion slot 3')],
+    ),
+    part(
+      'bmc',
+      'controller',
+      'Baseboard management controller',
+      1,
+      'Out-of-band management subsystem',
+      'The BMC provides remote monitoring and service access independently of the host operating system.',
+      [
+        spec('Network interface', '1 GbE RJ45'),
+        spec('Interfaces', 'Redfish, IPMI, SNMP, KVM and web UI'),
+        spec(
+          'Package and routing',
+          'Functional schematic; silicon SKU not recorded',
+        ),
+      ],
+      true,
+    ),
     drivePart(8, 'U.2', '3.84 TB'),
     bootPart(),
     motherboard,
     baseboard,
     backplane,
     psuPart(6, '3.3 kW', '4 + 2'),
+    fanPart(12),
   ],
-  sources: [reference('DGX H100 / H200 user guide', urls.h100)],
+  sources: [
+    reference('DGX H100 / H200 user guide', urls.h100),
+    reference(
+      'H100 / H200 fan and chassis details',
+      'https://docs.nvidia.com/dgx/dgxh100-user-guide/dgxh100-user-guide.pdf',
+    ),
+  ],
 });
 const h200 = compute({
   ...h100,
@@ -476,9 +520,18 @@ const dell = compute({
     baseboard,
     backplane,
     fanPart(20),
+    psuPart(
+      12,
+      '3,200 W at 216.1–240 VAC; 2,900 W at 200–216 VAC',
+      'Redundant; confirm selected power policy',
+    ),
   ],
   sources: [
     reference('Dell XE9780 system overview', urls.dell),
+    reference(
+      'Dell XE9780 PSU specifications',
+      'https://www.dell.com/support/manuals/en-hk/poweredge-xe9780/xe9780_ism_pub/psu-specifications?guid=guid-2cc6e269-6f53-4731-bb35-0b72f4d2dfae&lang=en-us',
+    ),
     reference(
       'Dell XE9780 reference networking',
       'https://infohub.delltechnologies.com/en-uk/l/dell-ai-factory-with-nvidia-including-nvidia-gpus-and-spectrum-4-switches-with-dell-sonic/gpu-worker-node-configuration-27/2/',
@@ -509,7 +562,7 @@ const hpe = compute({
     spec(
       'PSU configuration',
       '3,000 W CRPS modules',
-      'Population depends on GPU and redundancy options',
+      'MI355X DLC: 12 supplies; selected voltage and redundancy require qualification',
     ),
   ],
   parts: [
@@ -535,6 +588,11 @@ const hpe = compute({
     ),
     drivePart(8, 'EDSFF'),
     bootPart('480 or 960 GB'),
+    psuPart(
+      12,
+      '3,000 W CRPS Titanium',
+      'N+1; confirm the selected MI355X DLC configuration',
+    ),
     motherboard,
     baseboard,
     backplane,
@@ -550,6 +608,10 @@ const hpe = compute({
   ],
   sources: [
     reference('XD685 QuickSpecs · August 2026', urls.hpe),
+    reference(
+      'HPE XD685 MI355X DLC specifications',
+      'https://www.hpe.com/jp/ja/product-catalog/compute/proliant-servers/pip.specifications.proliant-dl-servers.1014862906.html',
+    ),
     reference('AMD accelerator specifications', urls.amd),
   ],
 });
@@ -559,6 +621,8 @@ const lenovo = compute({
   name: 'ThinkSystem SR680a V4',
   family: 'HGX B300',
   units: 8,
+  depth: 0.924,
+  width: 0.447,
   color: '#ef9696',
   description:
     'Lenovo’s air-cooled 8U B300 platform integrates eight ConnectX-8 adapters and dual Xeon 6700-series hosts. Drive trays are front accessible.',
@@ -569,12 +633,12 @@ const lenovo = compute({
     spec('Chassis', '8U air cooled'),
     spec(
       'Mechanical depth',
-      'Illustrative 900 mm',
-      'Height follows the product guide',
+      '924 mm',
+      '351 × 447 × 924 mm body; rail and service clearance checked separately',
     ),
   ],
   parts: [
-    gpuPart('B300 SXM6', 8, 288, 'HBM3e', '8 TB/s', 'NVLink 5'),
+    gpuPart('B300 SXM6', 8, 288, 'HBM3e', '7.7 TB/s', 'NVLink 5'),
     cpuPart('Intel Xeon 6700P series', 'Up to 86 / socket'),
     memoryPart(32, 'Up to 4 TB'),
     nvs(2, 'NVLink 5'),
@@ -589,6 +653,12 @@ const lenovo = compute({
       [spec('Ports', '2 × 400 GbE')],
     ),
     drivePart(8, '2.5-inch Gen 5'),
+    fanPart(21),
+    psuPart(
+      8,
+      '3,200 W AC · selected option',
+      'N+1; 3,800 W option has different voltage and redundancy rules',
+    ),
     bootPart('Configuration dependent'),
     motherboard,
     baseboard,
@@ -645,7 +715,8 @@ const sm350 = compute({
     { ...motherboard, model: 'Supermicro H14DSG-OD' },
     baseboard,
     backplane,
-    fanPart(10),
+    { ...fanPart(14), population: 'slots', title: 'Fan positions · up to 14' },
+    bootPart('Configuration dependent'),
     psuPart(6, '5,250 W', '3 + 3'),
   ],
   sources: [
@@ -663,7 +734,8 @@ const sm355 = compute({
   name: 'AS-4126GS-NMR-LCC',
   family: 'Instinct MI355X',
   units: 4,
-  depth: 0.9,
+  depth: 0.89535,
+  width: 0.449,
   cooling: 'Direct liquid',
   description:
     'A 4U direct-liquid-cooled MI355X system using the H14DSG-OD host board. Eight OAM accelerators carry 2,304 GB of HBM3e.',
@@ -671,7 +743,7 @@ const sm355 = compute({
     spec('Motherboard', 'H14DSG-OD'),
     spec('GPU memory', '2,304 GB HBM3e'),
     spec('System memory', '24 DIMM slots · up to 6 TB'),
-    spec('Chassis', '4U · depth shown illustratively'),
+    spec('Chassis', '174 × 449 × 895.35 mm'),
   ],
   parts: [
     gpuPart(
@@ -686,6 +758,7 @@ const sm355 = compute({
       (p) => !['gpu', 'fan', 'psu', 'sata'].includes(p.key),
     ),
     psuPart(4, '6,600 W', '2 + 2'),
+    { ...fanPart(5), population: 'slots', title: 'Fan positions · up to 5' },
   ],
   sources: [
     reference('AS-4126GS-NMR-LCC specification', urls.sm355),
@@ -700,6 +773,8 @@ const sm300 = compute({
   ...sm355,
   id: 'sm-b300',
   name: 'AS-4126GS-NB3RT-LCC',
+  depth: 0.8968,
+  width: 0.448,
   family: 'HGX B300',
   description:
     'A compact 4U liquid-cooled HGX B300 configuration with dual AMD hosts, eight E1.S data drives and four power supplies.',
@@ -707,15 +782,27 @@ const sm300 = compute({
     spec('GPU memory', '2,304 GB HBM3e'),
     spec('Motherboard', 'H14DSG-OM'),
     spec('System memory', '24 DIMM slots · up to 6 TB'),
-    spec('Chassis', '4U · depth shown illustratively'),
+    spec(
+      'Chassis',
+      '174 × 448 × 896.8 mm',
+      'Vendor also prints 39.03 inches for depth, which conflicts with its metric value; metric value shown provisionally',
+    ),
   ],
   parts: [
     b300.parts[0],
     ...sm355.parts.filter(
-      (p) => !['gpu', 'nic', 'nvme', 'board', 'backplane'].includes(p.key),
+      (p) =>
+        !['gpu', 'nic', 'nvme', 'board', 'backplane', 'boot', 'fan'].includes(
+          p.key,
+        ),
     ),
     nvs(2, 'NVLink 5'),
     nicPart(8, 'ConnectX-8', 'Up to 800 Gb/s'),
+    {
+      ...fanPart(4),
+      population: 'slots',
+      title: 'Rear fan positions · up to 4',
+    },
     drivePart(8, 'E1.S'),
     { ...motherboard, model: 'Supermicro H14DSG-OM' },
     backplane,
@@ -806,6 +893,26 @@ const qm = network(
   'https://networking-docs.nvidia.com/qm97x0hw/introduction',
 );
 qm.parts.push(fanPart(7));
+qm.depth = 0.66;
+qm.width = 0.438;
+qm.sources.push(
+  reference(
+    'QM9700 chassis and control plane',
+    'https://networking-docs.nvidia.com/qm97x0hw/specifications',
+  ),
+);
+qm.parts = qm.parts.map((p) =>
+  p.key === 'controller'
+    ? {
+        ...p,
+        model: 'Intel Core i3 Coffee Lake control plane',
+        specs: [
+          spec('Processor', 'Intel Core i3 Coffee Lake'),
+          spec('Board geometry', 'Functional schematic'),
+        ],
+      }
+    : p,
+);
 const sn = network(
   'sn4600c',
   'SN4600C',
@@ -816,6 +923,22 @@ const sn = network(
   64,
   'Spectrum-3',
   'https://docs.nvidia.com/networking/display/nvidia-spectrum-3-sn4000-1u-and-2u-switch-systems-hardware-user-manual.pdf',
+);
+sn.depth = 0.5664;
+sn.width = 0.428;
+sn.parts.push(fanPart(3));
+sn.parts = sn.parts.map((p) =>
+  p.key === 'psu' ? psuPart(2, '1,100 W AC', '1 + 1') : p,
+);
+sn.sources.push(
+  reference(
+    'SN4600C fans and interfaces',
+    'https://networking-docs.nvidia.com/sn4000hw/introduction',
+  ),
+  reference(
+    'SN4600C power supplies',
+    'https://networking-docs.nvidia.com/sn4000hw/accessory-and-replacement-parts',
+  ),
 );
 const sn5 = network(
   'sn5600',
@@ -828,7 +951,30 @@ const sn5 = network(
   'Spectrum-4',
   'https://docs.nvidia.com/nvidia-spectrum-4-sn5000-2u-switch-systems-hardware-user-manual.pdf',
 );
+sn5.depth = 0.72;
+sn5.width = 0.438;
+sn5.sources.push(
+  reference(
+    'SN5600 dimensions, ports and control plane',
+    'https://networking-docs.nvidia.com/sn5000hw/specifications',
+  ),
+);
 sn5.parts.push(fanPart(4));
+sn5.parts = sn5.parts.map((p) =>
+  p.key === 'controller'
+    ? {
+        ...p,
+        model: 'Intel Xeon E-2276ME control plane',
+        description:
+          'The management subsystem runs the network operating system. CPU, memory and storage specifications follow the SN5600 hardware manual; board geometry is illustrative.',
+        specs: [
+          spec('Processor', 'Intel Xeon E-2276ME · 6 cores'),
+          spec('System memory', '32 GB DDR4'),
+          spec('Control-plane storage', '160 GB SSD'),
+        ],
+      }
+    : p,
+);
 const q34 = network(
   'q3400',
   'Quantum-X800 Q3400-RA',
@@ -838,12 +984,43 @@ const q34 = network(
   '800 Gb/s XDR',
   144,
   'Quantum-X800',
-  'https://docs.nvidia.com/nvidia-q32xx-and-q34xx-xdr-800gb-s-infiniband-switch-systems-user-manual.pdf',
+  'https://docs.nvidia.com/networking/display/nvidia-q32xx-and-q34xx-xdr-800gb-s-infiniband-switch-systems-user-manual.pdf',
+);
+q34.depth = 0.85;
+q34.width = 0.438;
+q34.parts.push(fanPart(10));
+q34.sources.push(
+  reference(
+    'Q3400-RA fans and interfaces',
+    'https://networking-docs.nvidia.com/xdrswitcheshw/introduction',
+  ),
+  reference(
+    'Q3400-RA dimensions and control plane',
+    'https://networking-docs.nvidia.com/xdrswitcheshw/specifications',
+  ),
 );
 q34.parts = q34.parts.map((p) =>
   p.key === 'psu'
     ? psuPart(8, 'See hardware manual', 'Configuration dependent')
-    : p,
+    : p.key === 'asic'
+      ? {
+          ...p,
+          title: 'Switching subsystem',
+          schematic: true,
+          population: 'representative',
+          description:
+            'Functional switching block. The referenced specifications establish port capacity; the ASIC package population has not been verified.',
+        }
+      : p.key === 'controller'
+        ? {
+            ...p,
+            model: 'Intel Core i3-8100H control plane',
+            specs: [
+              spec('Processor', 'Intel Core i3-8100H · 4 cores · 3 GHz'),
+              spec('Board geometry', 'Functional schematic'),
+            ],
+          }
+        : p,
 );
 const ddn: Profile = {
   id: 'ai400x2',
@@ -903,7 +1080,7 @@ const ddn: Profile = {
       ],
       true,
     ),
-    backplane,
+    { ...backplane, schematic: true, population: 'representative' },
     part(
       'port',
       'port',
@@ -913,7 +1090,15 @@ const ddn: Profile = {
       'Shared-storage network connection. The reference uses HDR InfiniBand.',
       [spec('Port rate', '200 Gb/s'), spec('Population', '8')],
     ),
-    psuPart(2, 'See appliance configuration', 'Redundant hot-swap'),
+    {
+      ...psuPart(
+        2,
+        'Not published in the referenced data sheet',
+        'Redundant power function; module count unverified',
+      ),
+      schematic: true,
+      population: 'representative',
+    },
   ],
   sources: [reference('DDN A³I data sheet', urls.ddn)],
 };
@@ -988,6 +1173,14 @@ function nvlTray(gen: 'gb200' | 'gb300'): Profile {
     sources: [
       reference('DGX NVL72 hardware guide', urls.nvl),
       reference('NVL72 tray population and rack locations', urls.nvlPositions),
+      ...(ultra
+        ? [
+            reference(
+              'DGX GB300 rack and tray configuration',
+              'https://docs.nvidia.com/pdf/dgx-spod-gb300-ra.pdf',
+            ),
+          ]
+        : []),
       reference(
         'GB200 platform capacities',
         'https://www.nvidia.com/en-us/data-center/gb200-nvl72/',
@@ -1027,7 +1220,7 @@ const power: Profile = {
   face: 'power',
   parts: [psuPart(6, '5.5 kW', 'Rack-level redundancy')],
   description:
-    'A rack power shelf contains six supply modules feeding the DC busbar. Rack electrical and thermal engineering remains a v2 feature.',
+    'A rack power shelf contains six supply modules feeding the DC busbar. Open Power to trace the shelf-to-component path; electrical ratings require the selected shelf configuration.',
   specs: [
     spec('Supplies per shelf', '6 × 5.5 kW'),
     spec('Shelves per rack', '8'),
@@ -1062,6 +1255,64 @@ const tor: Profile = {
   description:
     'Top-of-rack out-of-band management switch, distinct from the high-speed scale-out fabric.',
 };
+tor.parts.push(
+  part(
+    'uplink',
+    'port',
+    'Aggregation uplink cages',
+    4,
+    'QSFP28 cage',
+    'Uplinks connect the management switch to its Ethernet aggregation network.',
+    [
+      spec('Native rate', '100 GbE'),
+      spec(
+        'Other modes',
+        '40 GbE; 2 × 50 or 4 × 25 GbE breakout subject to cable support',
+      ),
+    ],
+  ),
+  psuPart(2, '250 W AC', '1 + 1; SN2201 AC variant'),
+  fanPart(4),
+);
+tor.depth = 0.432;
+tor.width = 0.428;
+tor.sources.push(
+  reference(
+    'SN2201 dimensions and control plane',
+    'https://networking-docs.nvidia.com/sn2201hw/specifications',
+  ),
+);
+tor.parts.push(
+  part(
+    'controller',
+    'controller',
+    'Management subsystem',
+    1,
+    'Intel x86 dual-core control plane',
+    'Management CPU, memory and operating-system storage. Board geometry is illustrative.',
+    [
+      spec('Processor', 'Intel x86 dual core'),
+      spec('Memory', '8 GB ECC DDR4 SO-DIMM'),
+      spec('Storage', '20 GB M.2 PCIe Gen 3 SSD'),
+    ],
+    true,
+  ),
+);
+tor.specs = [
+  spec('Management ports', '48 × 1GBASE-T'),
+  spec('Aggregation ports', '4 × QSFP28 · up to 100 GbE'),
+  spec('Power variant', 'SN2201 AC; SN2201_M uses a DC busbar'),
+];
+tor.sources.push(
+  reference(
+    'SN2201 interfaces, fans and power variants',
+    'https://networking-docs.nvidia.com/sn2201hw/introduction',
+  ),
+  reference(
+    'SN2201 power module specifications',
+    'https://docs.nvidia.com/networking/display/sn2201-and-sn2201-m-1g-management-switch-systems-user-manual.pdf',
+  ),
+);
 const nvlProfiles: Profile[] = (['gb200', 'gb300'] as const).map((gen) => ({
   ...nvlTray(gen),
   id: `${gen}-nvl72`,
@@ -1158,6 +1409,52 @@ export const CATALOG: Profile[] = [
   power,
   tor,
 ];
+for (const profile of CATALOG) {
+  profile.parts = profile.parts.map((part) => {
+    const configurable =
+      !profile.id.startsWith('dgx-') && !profile.id.startsWith('gb');
+    let population =
+      part.population ?? (part.schematic ? 'representative' : 'fixed');
+    if (
+      configurable &&
+      ['cpu', 'memory', 'nvme', 'boot', 'sata'].includes(part.key) &&
+      !part.schematic
+    )
+      population = 'slots';
+    if (profile.id === 'hpe-xd685' && ['nic', 'io'].includes(part.key))
+      population = 'slots';
+    if (
+      (profile.id.startsWith('sm-mi') && part.key === 'nic') ||
+      (['dell-xe9780', 'lenovo-sr680a-v4'].includes(profile.id) &&
+        part.key === 'dpu')
+    )
+      population = 'option';
+    return {
+      ...part,
+      population,
+      specs:
+        part.key === 'memory' && population === 'fixed'
+          ? part.specs.map((s) =>
+              s.label === 'Population'
+                ? spec(
+                    'Population',
+                    'Reference DIMM population shown; capacity option must be confirmed',
+                  )
+                : s,
+            )
+          : part.specs,
+    };
+  });
+}
+export function populationLabel(part: Part) {
+  return part.population === 'representative'
+    ? 'Representative blocks'
+    : part.population === 'slots'
+      ? 'Available positions'
+      : part.population === 'option'
+        ? 'Selected reference option'
+        : 'Documented population';
+}
 export const VISIBLE_CATALOG = CATALOG.filter((p) => !p.hidden);
 export function profileFor(h: Hardware): Profile {
   const id =

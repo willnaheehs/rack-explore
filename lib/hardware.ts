@@ -1,4 +1,9 @@
-import { profileFor, partFor, type Reference } from './catalog.ts';
+import {
+  profileFor,
+  partFor,
+  populationLabel,
+  type Reference,
+} from './catalog.ts';
 import type { FabricReferences } from './fabric-references.ts';
 export type Fabric = 'compute' | 'frontend' | 'storage';
 export type HardwareKind =
@@ -259,6 +264,7 @@ export function specsFor(h: Hardware): Spec[] {
   return part
     ? [
         ...part.specs,
+        { label: 'Population basis', value: populationLabel(part) },
         {
           label: 'Representation',
           value: part.schematic
@@ -270,7 +276,10 @@ export function specsFor(h: Hardware): Spec[] {
         { label: 'Platform', value: `${p.maker} ${p.name}` },
         { label: 'Rack space', value: `${p.units}U` },
         { label: 'Cooling design', value: p.cooling },
-        ...p.specs,
+        ...p.specs.filter(
+          (s) =>
+            !['Platform', 'Rack space', 'Cooling design'].includes(s.label),
+        ),
       ];
 }
 export function descriptionFor(h: Hardware) {
@@ -287,6 +296,7 @@ export type Link = {
   count: number;
   rate: number;
   label: string;
+  protocol?: 'ethernet' | 'infiniband';
 };
 export const LINKS: Link[] = [
   ...NODES.flatMap((n) =>

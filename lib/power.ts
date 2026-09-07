@@ -350,7 +350,7 @@ export function calculatePower(model: ClusterModel, s: PowerSettings) {
   };
   const pr = h ? profileFor(h) : null,
     psu = pr?.parts.find((p) => p.kind === 'psu');
-  const count = psu?.count ?? null;
+  const count = psu?.schematic ? null : (psu?.count ?? null);
   const surviving =
     count === null ? null : on ? (a && b ? count : Math.ceil(count / 2)) : 0;
   const redundancy =

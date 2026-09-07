@@ -1,6 +1,7 @@
 'use client';
 import {
   useCallback,
+  useMemo,
   useEffect,
   useState,
   useRef,
@@ -63,7 +64,14 @@ import { withReferenceFabrics } from '@/lib/fabric-references';
 import PowerView from './power-view';
 import CatalogPanel from './catalog-panel';
 import RackBuilder from './rack-builder';
-import { profileFor, CATALOG_DATE, type Profile } from '@/lib/catalog';
+import {
+  profileFor,
+  populationLabel,
+  CATALOG_DATE,
+  type Profile,
+} from '@/lib/catalog';
+import { validateConfiguration } from '@/lib/config-validation';
+import ConfigurationChecks from './configuration-checks';
 import { blankModel, cloneForBuilder, totals } from '@/lib/rack-builder';
 import ClusterScene, { type CameraCommand } from './cluster-scene';
 import {
@@ -130,6 +138,7 @@ export default function Explorer() {
     [exploded, setExploded] = useState(true);
   const resolveHardware = (id: string | null) => lookupHardware(id, model);
   const metrics = totals(model);
+  const validation = useMemo(() => validateConfiguration(model), [model]);
   const [selected, setSelected] = useState<string | null>(null);
   const [node, setNode] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -356,6 +365,7 @@ export default function Explorer() {
           <Box size={16} />
         )}
       </div>
+      <ConfigurationChecks report={validation} />
       {h ? (
         <>
           <div className="component-title">
@@ -451,7 +461,7 @@ export default function Explorer() {
                   key={p.key}
                   partKey={p.key}
                   title={p.title}
-                  subtitle={`${p.count} × ${p.model}${p.schematic ? ' · representative' : ''}`}
+                  subtitle={`${p.count} × ${p.model} · ${populationLabel(p)}`}
                   kind={p.kind}
                   node={h.parent ? resolveHardware(h.parent)! : h}
                   selected={selected}

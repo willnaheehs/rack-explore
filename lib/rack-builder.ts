@@ -1,5 +1,11 @@
 import { CATALOG, profileFor, type Profile } from './catalog.ts';
 import {
+  portBudget,
+  networkErrors,
+  type Transport,
+} from './network-validation.ts';
+export { portBudget } from './network-validation.ts';
+import {
   DEFAULT_MODEL,
   type ClusterModel,
   type Fabric,
@@ -73,7 +79,10 @@ export function placementError(
   if (!rack) return 'Select a rack.';
   if (profile.status === 'Preliminary' || profile.category === 'rack')
     return 'This platform requires its complete rack template.';
-  if (profile.mount !== (rack.mount ?? '19-inch'))
+  if (
+    profile.mount !== (rack.mount ?? '19-inch') &&
+    !(rack.mount === 'NVL72' && profile.id === 'sn2201')
+  )
     return `${profile.name} requires ${profile.mount} mounting.`;
   if (!Number.isInteger(u) || u < 1 || u + profile.units - 1 > rack.units)
     return `Choose a starting U between 1 and ${rack.units - profile.units + 1}.`;
@@ -228,27 +237,6 @@ export function totals(model: ClusterModel) {
     { gpus: 0, memoryGB: 0, compute: 0, usedU: 0 },
   );
 }
-export function portBudget(h: Hardware): number {
-  const pr = profileFor(h);
-  if (pr.id === 'ai400x2') return 8;
-  if (pr.category === 'network') {
-    const v = pr.specs.find(
-      (s) => s.label === 'Logical high-speed ports',
-    )?.value;
-    return v ? Number.parseInt(v) : 0;
-  }
-  return pr.parts
-    .filter((x) => x.kind === 'nic')
-    .reduce(
-      (n, x) =>
-        n +
-        x.count *
-          (x.model.includes('Dual-port') || x.model.includes('BlueField')
-            ? 2
-            : 1),
-      0,
-    );
-}
 export function addConnection(
   model: ClusterModel,
   input: {
@@ -258,6 +246,7 @@ export function addConnection(
     count: number;
     rate: number;
     id: string;
+    protocol?: Transport;
   },
 ): ClusterModel {
   const a = model.hardware.find((h) => h.id === input.from),
@@ -286,7 +275,10 @@ export function addConnection(
     ...input,
     label: `${input.count} × ${input.rate} Gb/s · planned`,
   };
-  return { ...model, links: [...model.links, link] };
+  const next = { ...model, links: [...model.links, link] };
+  const errors = networkErrors(next);
+  if (errors.length) throw new Error(errors[0]);
+  return next;
 }
 export function exportModel(model: ClusterModel): string {
   return JSON.stringify(
@@ -301,14 +293,17 @@ export function exportModel(model: ClusterModel): string {
         rack: h.rack,
         u: h.u,
       })),
-      connections: model.links.map(({ id, from, to, fabric, count, rate }) => ({
-        id,
-        from,
-        to,
-        fabric,
-        count,
-        rate,
-      })),
+      connections: model.links.map(
+        ({ id, from, to, fabric, count, rate, protocol }) => ({
+          id,
+          from,
+          to,
+          fabric,
+          count,
+          rate,
+          protocol,
+        }),
+      ),
     },
     null,
     2,
@@ -388,6 +383,9 @@ export function importModel(text: string): ClusterModel {
       fabric: e.fabric as Fabric,
       count: Number(e.count),
       rate: Number(e.rate),
+      ...(e.protocol !== undefined
+        ? { protocol: e.protocol as Transport }
+        : {}),
     });
   }
   return model;

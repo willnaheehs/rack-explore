@@ -8,6 +8,7 @@ An interactive HPC hardware explorer built with React, Vinext, Three.js, and the
 - Remove bezels and switch between assembled and exploded internal views.
 - The original eight-node H100 cluster retains all four racks, inspectable hardware interiors and physical fabric layers. **Topology → Rack connections** shows every device in that layout; **Vendor reference** opens the separately sourced SuperPOD plan. Copying the cluster into the custom builder preserves its connections.
 - Browse **Hardware catalog** for 19 documented or preliminary platform entries, including Dell, HPE, Lenovo, Supermicro, NVIDIA, AMD and DDN.
+- Open **Configuration checks** in the inspector or builder to see placement, component coverage, manufacturer references, network limits, and remaining engineering decisions. Component groups identify documented populations, available positions, selected reference options and representative blocks.
 - Use **Build a rack** for 42U/48U layouts, equipment placement, planned connections, local saves, and JSON import/export.
 - Select **Power** to trace utility / generator sources through UPS, distribution, rack PSUs or NVL72 power shelves, and component regulators. Try battery operation or A/B feed failures, change the load, and inspect every stage.
 - **Sourced fabric plans:** NVIDIA SuperPOD (H100/H200, B200, B300 XDR, GB200, GB300), Dell XE9780 AI Factory, Lenovo Hybrid AI 289-800 dual-plane, and Supermicro AMD/Pollara designs. Select a path to inspect protocol, rates, ports, cable details and source sections. Front-end/storage shared underlays are explicitly identified. HPE XD685, Supermicro B300, standalone switches and DDN appliances expose published interfaces without invented external wiring. Reference diagrams are separate from rack placement and custom cable schedules.
@@ -38,7 +39,7 @@ Published U heights, selected dimensions, device populations, and port arrangeme
 
 GB200/GB300 NVL72 templates use documented 48U tray positions, including 18 compute trays, 9 NVLink switch trays, 8 power shelves, and 2 management switches. Their proprietary compute trays cannot be placed in ordinary custom 19-inch racks. Memory quantities in the overview sum nominal per-GPU capacities and use decimal TB. OEM-specific values are retained—for example, the referenced Dell XE9780 manual's B300 variant differs from DGX B300.
 
-Custom rack validation checks U bounds, collisions, mounting family, unique device IDs and aggregate logical port / adapter-slot allocation. Planned connection rates are user choices, not protocol, adapter, breakout, cable, or optical compatibility certification. Rail fit, service clearances, load distribution, weight, rack electrical budgets, liquid loops and thermal simulation require separate engineering. The power explorer explains architecture and demand; it does not validate an electrical installation. Cooling and thermal simulation remain future work.
+Configuration checks cover all 17 loadable presets and the original H100 cluster: U bounds, collisions, mounting family, device IDs, chassis heights, internal inspection, GPU counts, source metadata, NVL72 generation and tray positions, and reference-graph integrity. Custom connections check shared protocol support, rate ceilings, logical port counts and nominal aggregate interface capacity. Choose Ethernet, InfiniBand, or infer the protocol from endpoints. Unknown adapter slots remain review items. These necessary capacity checks do not allocate numbered ports or qualify adapter SKUs, breakout modes, cables, firmware, or optics. Invalid connections and imports are rejected before changing the layout. See [the configuration audit](docs/configuration-audit.md) for source checkpoints and known gaps. Rail fit, service clearances, load distribution, weight, rack electrical budgets, liquid loops and thermal simulation require separate engineering. The power explorer explains architecture and demand; it does not validate an electrical installation. Cooling and thermal simulation remain future work.
 
 ## Power model
 
@@ -55,6 +56,7 @@ Facility voltages, equal feed sharing, usable feed current, efficiencies, batter
 - `lib/catalog.ts`: source-linked chassis profiles and internal component definitions.
 - `lib/hardware.ts`: reference cluster, IDs, inspection data and links.
 - `lib/rack-builder.ts`: pure placement, connection and import/export validation.
+- `lib/config-validation.ts`, `lib/network-validation.ts`: configuration reports and protocol/rate/capacity limits; `components/configuration-checks.tsx` displays the same report in both workspaces.
 - `components/cluster-scene.tsx`: scaled enclosure geometry, component assemblies, picking and camera controls. Static geometry is merged per device/material to reduce draw calls.
 - `components/topology.tsx`: accessible selectable SVG network diagrams.
 - `components/explorer.tsx`, `catalog-panel.tsx`, `rack-builder.tsx`: workstation and workflows.
@@ -65,4 +67,4 @@ Facility voltages, equal feed sharing, usable feed current, efficiencies, batter
 
 Custom saves use browser localStorage only when **Save locally** is selected. They are device- and origin-local; no cloud database or shared custom data is implied. JSON files provide portability between local and hosted previews.
 
-The site is configured for private Sites hosting in `.openai/hosting.json`. The production package is built from the same committed source pushed to the source repository. No credentials belong in source files.
+The site is configured for Sites hosting in `.openai/hosting.json`. The production package is built from the same committed source pushed to the source repository. No credentials belong in source files.

@@ -1,5 +1,8 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
+import { validateConfiguration } from '@/lib/config-validation';
+import { connectionProtocol, type Transport } from '@/lib/network-validation';
+import ConfigurationChecks from './configuration-checks';
 import {
   Plus,
   Trash2,
@@ -68,9 +71,11 @@ export default function RackBuilder({
     [to, setTo] = useState(''),
     [fabric, setFabric] = useState<Fabric>('compute'),
     [rate, setRate] = useState('400'),
+    [protocol, setProtocol] = useState('auto'),
     [count, setCount] = useState(1),
     [tab, setTab] = useState('equipment');
   const file = useRef<HTMLInputElement>(null);
+  const validation = useMemo(() => validateConfiguration(draft), [draft]);
   const rack = draft.racks.find((r) => r.id === rackId) ?? draft.racks[0],
     profile = CATALOG.find((p) => p.id === profileId)!,
     summary = totals(draft);
@@ -562,8 +567,9 @@ export default function RackBuilder({
                 <h3>Connect two devices</h3>
                 <p>
                   Plan grouped links between installed devices. Logical port /
-                  adapter-slot counts are checked. Adapter SKUs, protocol modes,
-                  transceivers, and cables still need qualification.
+                  adapter-slot counts, rate ceilings and protocol compatibility
+                  are checked. Exact adapter SKUs, port assignments,
+                  transceivers and cables still need qualification.
                 </p>
                 <label className="field-label" htmlFor="connection-from">
                   From
@@ -607,6 +613,20 @@ export default function RackBuilder({
                   />
                 </label>
                 <div className="connection-number-fields">
+                  <label className="field-label" htmlFor="connection-protocol">
+                    Protocol
+                    <Choice
+                      id="connection-protocol"
+                      label="Link protocol"
+                      value={protocol}
+                      onChange={setProtocol}
+                      options={[
+                        { value: 'auto', label: 'Infer from endpoints' },
+                        { value: 'ethernet', label: 'Ethernet' },
+                        { value: 'infiniband', label: 'InfiniBand' },
+                      ]}
+                    />
+                  </label>
                   <label className="field-label" htmlFor="connection-rate">
                     Rate
                     <Choice
@@ -643,6 +663,9 @@ export default function RackBuilder({
                           fabric,
                           rate: Number(rate),
                           count,
+                          ...(protocol === 'auto'
+                            ? {}
+                            : { protocol: protocol as Transport }),
                           id: `link-${crypto.randomUUID().slice(0, 8)}`,
                         }),
                       'Planned connection added.',
@@ -663,6 +686,12 @@ export default function RackBuilder({
                       </strong>
                       <span>
                         {FABRICS[l.fabric].name} · {l.count} × {l.rate} Gb/s
+                        {' · '}
+                        {connectionProtocol(draft, l) === 'ethernet'
+                          ? 'Ethernet'
+                          : connectionProtocol(draft, l) === 'infiniband'
+                            ? 'InfiniBand'
+                            : 'Protocol to confirm'}
                       </span>
                     </div>
                     <button
@@ -699,6 +728,7 @@ export default function RackBuilder({
             </div>
           </TabsContent>
         </Tabs>
+        <ConfigurationChecks report={validation} />
         <output className="builder-feedback" aria-live="polite">
           {error ? (
             <span className="error-text">{error}</span>
@@ -709,8 +739,8 @@ export default function RackBuilder({
             </span>
           ) : (
             <span>
-              Rack fit checks cover U space and mounting family. Power, cooling,
-              rail kits and weight are outside this version.
+              Configuration checks update as you build. Open the report for
+              component coverage, network limits and details to confirm.
             </span>
           )}
         </output>
@@ -742,7 +772,7 @@ export default function RackBuilder({
           </button>
           <button
             className="primary-button"
-            disabled={!draft.title.trim()}
+            disabled={!draft.title.trim() || validation.status === 'errors'}
             onClick={() => {
               onApply(draft);
               onOpenChange(false);

@@ -1,6 +1,7 @@
 import { modelForProfile } from './rack-builder.ts';
 import { VISIBLE_CATALOG } from './catalog.ts';
 import { withReferenceFabrics } from './fabric-references.ts';
+import { validateConfiguration } from './config-validation.ts';
 import {
   FABRICS,
   fabricInfo,
@@ -77,7 +78,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
       name: 'get_cluster_model',
       title: 'Read cluster hardware',
       description:
-        'Read the selected platform or custom hardware inventory and current visible selection. No live telemetry is provided.',
+        'Read the selected platform, component coverage, configuration checks and current visible selection. Checks report modeling errors and unresolved engineering details. No production inventory or live telemetry is provided.',
       inputSchema: {
         type: 'object',
         properties: {},
@@ -90,6 +91,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
           throw new Error('No arguments expected.');
         return {
           state: snapshot(),
+          configurationChecks: validateConfiguration(actions.read().model),
           fabricReferences: referenceSummary(),
           availablePlatforms: VISIBLE_CATALOG.filter(
             (p) => p.status === 'Documented',
