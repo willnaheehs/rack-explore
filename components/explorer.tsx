@@ -136,6 +136,7 @@ export default function Explorer() {
     [builderProfile, setBuilderProfile] = useState<Profile | null>(null);
   const [service, setService] = useState(false),
     [exploded, setExploded] = useState(true);
+  const [isolated, setIsolated] = useState(false);
   const resolveHardware = (id: string | null) => lookupHardware(id, model);
   const metrics = totals(model);
   const validation = useMemo(() => validateConfiguration(model), [model]);
@@ -185,6 +186,8 @@ export default function Explorer() {
       const item = lookupHardware(id, model);
       if (!item) return;
       setSelected(id);
+      setIsolated(!!item.parent);
+      setHovered(null);
       setPowerRackId(item.rack);
       setPowerRevision((value) => value + 1);
       setNode((prev) => item.parent ?? (prev === item.id ? prev : null));
@@ -201,10 +204,12 @@ export default function Explorer() {
   const reset = useCallback(() => {
     setSelected(null);
     setNode(null);
+    setIsolated(false);
     setDetailTab('overview');
     setCommand((c) => ({ type: 'fit', sequence: c.sequence + 1 }));
   }, []);
   const loadModel = (next: ClusterModel) => {
+    setIsolated(false);
     const displayed = withReferenceFabrics(next);
     setModel(displayed);
     setTopologyPresentation(
@@ -232,6 +237,7 @@ export default function Explorer() {
     setBuilder(true);
   };
   const exploreNode = (id: string) => {
+    setIsolated(false);
     setNode(id);
     setSelected(id);
     setView('physical');
@@ -284,6 +290,7 @@ export default function Explorer() {
     topologyPresentation,
     model,
     powerRackId,
+    componentPresentation: isolated ? 'isolated' : 'assembly',
   });
   useEffect(() => {
     stateRef.current = {
@@ -294,6 +301,7 @@ export default function Explorer() {
       topologyPresentation,
       model,
       powerRackId,
+      componentPresentation: isolated ? 'isolated' : 'assembly',
     };
   }, [
     selected,
@@ -303,6 +311,7 @@ export default function Explorer() {
     topologyPresentation,
     model,
     powerRackId,
+    isolated,
   ]);
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext })
@@ -365,7 +374,7 @@ export default function Explorer() {
           <Box size={16} />
         )}
       </div>
-      <ConfigurationChecks report={validation} />
+      {!h && <ConfigurationChecks report={validation} />}
       {h ? (
         <>
           <div className="component-title">
@@ -593,7 +602,7 @@ export default function Explorer() {
   );
   return (
     <main
-      className={`explorer ${inventory ? '' : 'inventory-hidden'} ${view === 'power' ? 'power-mode' : ''}`}
+      className={`explorer ${inventory ? '' : 'inventory-hidden'} ${view === 'power' ? 'power-mode' : ''} ${node && view === 'physical' ? 'component-view' : ''}`}
     >
       <header className="app-header">
         <button
@@ -901,6 +910,7 @@ export default function Explorer() {
               model={model}
               service={service}
               exploded={exploded}
+              isolated={isolated}
               selected={selected}
               node={node}
               layers={layers}
@@ -977,6 +987,7 @@ export default function Explorer() {
               onClick={() => {
                 setNode(null);
                 setSelected(null);
+                setIsolated(false);
                 camera('fit');
               }}
             >
@@ -993,10 +1004,18 @@ export default function Explorer() {
                       ? 'CUSTOM CLUSTER'
                       : 'HARDWARE EXPLORER'}
                 </span>
-                <h1>{node ? resolveHardware(node)?.model : model.title}</h1>
+                <h1>
+                  {node
+                    ? isolated && h?.parent
+                      ? h.name
+                      : resolveHardware(node)?.model
+                    : model.title}
+                </h1>
                 <p>
                   {node
-                    ? 'Select any module to inspect its role and specifications.'
+                    ? isolated && h?.parent
+                      ? 'Isolated for inspection · orbit to see every side.'
+                      : 'Select a module to inspect it on its own.'
                     : model.links.length
                       ? 'Select a chassis to explore its components. Toggle fabric layers to trace the rack connections.'
                       : model.fabricReferences
@@ -1005,6 +1024,28 @@ export default function Explorer() {
                 </p>
               </div>
               <div className="assembly-controls">
+                {node && h?.parent && (
+                  <>
+                    <button
+                      className="quiet-button"
+                      onClick={() => exploreNode(node)}
+                    >
+                      <ArrowLeft size={14} /> Full assembly
+                    </button>
+                    <label htmlFor="component-context">
+                      <span>Nearby parts</span>
+                      <Switch
+                        id="component-context"
+                        aria-label="Show nearby components"
+                        checked={!isolated}
+                        onCheckedChange={(checked) => {
+                          setIsolated(!checked);
+                          camera('fit');
+                        }}
+                      />
+                    </label>
+                  </>
+                )}
                 {node ? (
                   <label htmlFor="assembly-explode">
                     <span>Exploded assembly</span>
@@ -1056,8 +1097,8 @@ export default function Explorer() {
                 <button
                   className="icon-button"
                   onClick={() => camera('fit')}
-                  aria-label="Fit all hardware"
-                  title="Fit all hardware (F)"
+                  aria-label="Fit current view"
+                  title="Fit current view (F)"
                 >
                   <Maximize size={16} />
                 </button>

@@ -5,10 +5,10 @@ An interactive HPC hardware explorer built with React, Vinext, Three.js, and the
 ## Use
 
 - Orbit, zoom, select a chassis, then **Explore components**.
-- Remove bezels and switch between assembled and exploded internal views.
+- Remove bezels and switch between assembled and exploded internal views. Selecting an internal module isolates it for inspection; **Full assembly** restores all modules and **Nearby parts** shows its context. Fan, PSU, memory, drive and I/O groups have separate service-view positions; the camera fits their bounds on narrow and wide screens.
 - The original eight-node H100 cluster retains all four racks, inspectable hardware interiors and physical fabric layers. **Topology → Rack connections** shows every device in that layout; **Vendor reference** opens the separately sourced SuperPOD plan. Copying the cluster into the custom builder preserves its connections.
 - Browse **Hardware catalog** for 19 documented or preliminary platform entries, including Dell, HPE, Lenovo, Supermicro, NVIDIA, AMD and DDN.
-- Open **Configuration checks** in the inspector or builder to see placement, component coverage, manufacturer references, network limits, and remaining engineering decisions. Component groups identify documented populations, available positions, selected reference options and representative blocks.
+- Open **Configuration checks** in the cluster overview or builder to see placement, component coverage, manufacturer references, network limits, and remaining engineering decisions. Component groups identify documented populations, available positions, selected reference options and representative blocks.
 - Use **Build a rack** for 42U/48U layouts, equipment placement, planned connections, local saves, and JSON import/export.
 - Select **Power** to trace utility / generator sources through UPS, distribution, rack PSUs or NVL72 power shelves, and component regulators. Try battery operation or A/B feed failures, change the load, and inspect every stage.
 - **Sourced fabric plans:** NVIDIA SuperPOD (H100/H200, B200, B300 XDR, GB200, GB300), Dell XE9780 AI Factory, Lenovo Hybrid AI 289-800 dual-plane, and Supermicro AMD/Pollara designs. Select a path to inspect protocol, rates, ports, cable details and source sections. Front-end/storage shared underlays are explicitly identified. HPE XD685, Supermicro B300, standalone switches and DDN appliances expose published interfaces without invented external wiring. Reference diagrams are separate from rack placement and custom cable schedules.

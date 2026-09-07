@@ -3,6 +3,11 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { profileFor, partFor } from '@/lib/catalog';
+import {
+  componentPosition,
+  componentFitDistance,
+  visibleComponentIds,
+} from '@/lib/component-layout';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {
@@ -24,6 +29,7 @@ type Props = {
   model: ClusterModel;
   service: boolean;
   exploded: boolean;
+  isolated: boolean;
   selected: string | null;
   node: string | null;
   layers: Record<Fabric, boolean>;
@@ -701,6 +707,11 @@ export default function ClusterScene(props: Props) {
       register(h.id, g);
       return g;
     }
+    let componentAssembly: THREE.Group | null = null;
+    const assemblyContext = new THREE.Group();
+    let assemblyChildren: Hardware[] = [];
+    let assemblyBounds: THREE.Box3 | null = null;
+    const componentLabels = new Map<string, THREE.Sprite>();
     if (!props.node) {
       for (const rack of RACKS) {
         const g = new THREE.Group();
@@ -867,13 +878,16 @@ export default function ClusterScene(props: Props) {
       if (!node) return;
       const pr = profileFor(node),
         assembly = new THREE.Group();
+      componentAssembly = assembly;
+      assembly.add(assemblyContext);
       scene.add(assembly);
       const spread = props.exploded ? 1 : 0;
-      box(0.49, 0.018, pr.depth, darkSteel, 0, 0.17, 0, assembly, true);
+      box(0.49, 0.018, pr.depth, darkSteel, 0, 0.17, 0, assemblyContext, true);
       for (const xx of [-0.24, 0.24])
-        box(0.008, 0.06, pr.depth, darkSteel, xx, 0.19, 0, assembly);
+        box(0.008, 0.06, pr.depth, darkSteel, xx, 0.19, 0, assemblyContext);
       const kids = childrenOf(node),
         isCompute = pr.category === 'compute';
+      assemblyChildren = kids;
       function chipBoard(g: THREE.Object3D, w: number, d: number) {
         box(w, 0.006, d, pcb, 0, 0, 0, g);
         for (let k = 0; k < 6; k++) {
@@ -925,7 +939,6 @@ export default function ClusterScene(props: Props) {
       for (const item of kids) {
         const i = item.index!,
           part = partFor(item)!,
-          same = kids.filter((k) => k.part === item.part),
           g = new THREE.Group();
         assembly.add(g);
         if (item.kind === 'board' || item.kind === 'backplane') {
@@ -939,14 +952,14 @@ export default function ClusterScene(props: Props) {
               box(0.028, 0.018, 0.012, black, -0.18 + n * 0.052, 0.012, 0, g);
           } else {
             g.position.set(
-              isCompute ? 0.32 * spread : 0,
+              isCompute ? 0.52 * spread : 0,
               0.245 + spread * (isCompute ? 0.25 : 0),
               isCompute ? 0.19 : 0.04,
             );
             chipBoard(
               g,
-              isCompute ? 0.29 : 0.42,
-              isCompute ? 0.29 : pr.depth * 0.61,
+              isCompute ? 0.44 : 0.42,
+              isCompute ? 0.33 : pr.depth * 0.61,
             );
           }
         } else if (item.kind === 'gpu') {
@@ -987,24 +1000,11 @@ export default function ClusterScene(props: Props) {
             heatSink(lid, 0.14, 0.1, 0);
           }
         } else if (item.kind === 'cpu') {
-          g.position.set(
-            (i - 0.5) * 0.14 + 0.32 * spread,
-            0.28 + spread * 0.29,
-            0.21,
-          );
           chipBoard(g, 0.11, 0.1);
           box(0.077, 0.009, 0.064, black, 0, 0.007, 0, g);
           box(0.061, 0.013, 0.054, silicon, 0, 0.02, 0, g, true);
           if (!props.exploded) heatSink(g, 0.08, 0.07, 0.03);
         } else if (item.kind === 'memory') {
-          const cols = Math.min(8, part.count),
-            r = Math.floor(i / cols),
-            col = i % cols;
-          g.position.set(
-            0.32 * spread + (r % 2 === 0 ? -0.115 : 0.115),
-            0.28 + spread * 0.28,
-            0.085 + col * 0.028 + (r > 1 ? 0.014 : 0),
-          );
           box(0.003, 0.042, 0.021, pcb, 0, 0, 0, g);
           for (let k = 0; k < 3; k++)
             box(
@@ -1028,14 +1028,6 @@ export default function ClusterScene(props: Props) {
           box(0.034, 0.011, 0.042, silicon, 0, 0.012, 0, g, true);
           if (!props.exploded) heatSink(g, 0.045, 0.05, 0.022);
         } else if (item.kind === 'nic') {
-          const isIO = item.part !== 'nic';
-          g.position.set(
-            item.part === 'management'
-              ? 0.12
-              : (i - (same.length - 1) / 2) * 0.052,
-            0.31 + spread * (isIO ? 0.28 : 0.17),
-            isIO ? 0.35 : -pr.depth * 0.42,
-          );
           chipBoard(g, 0.043, 0.14);
           box(0.018, 0.009, 0.025, silicon, 0, 0.01, 0, g);
           box(0.035, 0.02, 0.03, steel, 0, 0.013, -0.069, g);
@@ -1045,11 +1037,6 @@ export default function ClusterScene(props: Props) {
           const boot = item.part === 'boot',
             wide = boot ? 0.025 : 0.044,
             depth = boot ? 0.075 : 0.1;
-          g.position.set(
-            (i - (same.length - 1) / 2) * (same.length > 10 ? 0.025 : 0.054),
-            0.24 + spread * (boot ? 0.43 : 0.08),
-            pr.depth * 0.39 + (boot ? -0.12 : 0),
-          );
           box(wide + 0.003, 0.008, depth + 0.002, steel, 0, -0.006, 0, g, true);
           chipBoard(g, wide, depth);
           for (let k = 0; k < 4; k++)
@@ -1088,6 +1075,7 @@ export default function ClusterScene(props: Props) {
             );
           }
         } else if (item.kind === 'controller' || item.kind === 'asic') {
+          const bmc = item.part === 'bmc';
           g.position.set(
             0,
             0.29 + spread * 0.08,
@@ -1095,13 +1083,23 @@ export default function ClusterScene(props: Props) {
           );
           chipBoard(
             g,
-            item.kind === 'asic' ? 0.12 : 0.29,
-            item.kind === 'asic' ? 0.12 : 0.26,
+            bmc ? 0.075 : item.kind === 'asic' ? 0.12 : 0.29,
+            bmc ? 0.055 : item.kind === 'asic' ? 0.12 : 0.26,
           );
-          box(0.059, 0.015, 0.058, silicon, 0, 0.014, 0, g, true);
-          for (let k = 0; k < 4; k++)
+          box(
+            bmc ? 0.027 : 0.059,
+            0.015,
+            bmc ? 0.027 : 0.058,
+            silicon,
+            0,
+            0.014,
+            0,
+            g,
+            true,
+          );
+          for (let k = 0; !bmc && k < 4; k++)
             box(0.019, 0.009, 0.035, black, -0.094 + k * 0.063, 0.01, 0.084, g);
-          if (!props.exploded) heatSink(g, 0.075, 0.075, 0.03);
+          if (!props.exploded && !bmc) heatSink(g, 0.075, 0.075, 0.03);
         } else if (item.kind === 'port') {
           const cols = pr.ports?.cols ?? 8,
             r = Math.floor(i / cols) + (item.part === 'uplink' ? 2 : 0);
@@ -1114,12 +1112,6 @@ export default function ClusterScene(props: Props) {
           box((0.42 / cols) * 0.65, 0.012, 0.008, slot, 0, 0, 0.036, g);
           box((0.42 / cols) * 0.7, 0.002, 0.05, pcb, 0, -0.01, -0.044, g);
         } else if (item.kind === 'psu') {
-          const cols = Math.min(6, part.count);
-          g.position.set(
-            ((i % cols) - (cols - 1) / 2) * 0.074,
-            0.27 + Math.floor(i / cols) * 0.04 + spread * 0.32,
-            -pr.depth * 0.28,
-          );
           box(0.062, 0.032, 0.14, steel, 0, 0, 0, g, true);
           box(0.04, 0.025, 0.006, slot, 0, 0, -0.072, g);
           box(0.004, 0.028, 0.014, black, 0.025, 0, -0.08, g);
@@ -1151,6 +1143,8 @@ export default function ClusterScene(props: Props) {
           );
           fan(g, 0, 0, 0, Math.min(0.073, 0.38 / cols));
         }
+        const placement = componentPosition(pr, item, props.exploded);
+        if (placement) g.position.set(...placement);
         if (['gpu', 'cpu', 'controller', 'asic'].includes(item.kind)) {
           const t = caption(item.name, 0.075, 0.015, '#e4efdf');
           t.position.set(
@@ -1159,6 +1153,8 @@ export default function ClusterScene(props: Props) {
             0.045,
           );
           t.material.depthTest = true;
+          t.visible = false;
+          componentLabels.set(item.id, t);
           g.add(t);
         }
         register(item.id, g);
@@ -1166,7 +1162,7 @@ export default function ClusterScene(props: Props) {
       // Guides indicate assembly separation, not signal routes.
       if (props.exploded)
         for (const x of [-0.23, 0.23])
-          scene.add(
+          assemblyContext.add(
             line(
               [
                 new THREE.Vector3(x, 0.19, -0.3),
@@ -1181,6 +1177,7 @@ export default function ClusterScene(props: Props) {
       orbit.target.set(0.1 * spread, 0.36, 0);
       camera.position.set(1.04, 1.27, 1.45);
       orbit.maxPolarAngle = Math.PI * 0.49;
+      assemblyBounds = new THREE.Box3().setFromObject(assembly);
     }
     const highlight = new THREE.BoxHelper(new THREE.Object3D(), GREEN);
     highlight.visible = false;
@@ -1208,21 +1205,34 @@ export default function ClusterScene(props: Props) {
     function focus(id: string | null) {
       selectedId = id;
       const obj = id ? objects.get(id) : undefined;
+      if (componentAssembly) {
+        const visible = new Set(
+          visibleComponentIds(assemblyChildren, id, current.current.isolated),
+        );
+        for (const [key, object] of objects) object.visible = visible.has(key);
+        assemblyContext.visible =
+          visible.size !== 1 || !current.current.isolated;
+        for (const [key, label] of componentLabels) label.visible = key === id;
+      }
       highlight.visible = Boolean(obj);
       if (obj) highlight.setFromObject(obj);
+      if (componentAssembly && !current.current.isolated) {
+        command({ type: 'fit', sequence: 0 });
+        return;
+      }
       if (obj) {
         const bounds = new THREE.Box3().setFromObject(obj);
         const center = bounds.getCenter(new THREE.Vector3());
         const size = bounds.getSize(new THREE.Vector3());
         const aspect = Math.min(1, camera.aspect);
         const distance = props.node
-          ? Math.max(0.2, (size.length() * 1.65) / aspect)
+          ? componentFitDistance([size.x, size.y, size.z], camera.aspect)
           : Math.max(1.0, (size.length() * 1.65) / aspect);
         const dir = new THREE.Vector3()
           .subVectors(camera.position, orbit.target)
           .normalize();
         go(center.clone().add(dir.multiplyScalar(distance)), center);
-      }
+      } else if (componentAssembly) command({ type: 'fit', sequence: 0 });
     }
     const command = (cmd: CameraCommand) => {
       const obj = selectedId ? objects.get(selectedId) : undefined;
@@ -1245,6 +1255,29 @@ export default function ClusterScene(props: Props) {
         return;
       }
       if (cmd.type === 'fit') {
+        if (assemblyBounds) {
+          const bounds =
+            current.current.isolated && obj
+              ? new THREE.Box3().setFromObject(obj)
+              : assemblyBounds;
+          const target = bounds.getCenter(new THREE.Vector3());
+          const size = bounds.getSize(new THREE.Vector3());
+          const distance = componentFitDistance(
+            [size.x, size.y, size.z],
+            camera.aspect,
+          );
+          go(
+            target
+              .clone()
+              .add(
+                new THREE.Vector3(0.35, 1.05, 1.5)
+                  .normalize()
+                  .multiplyScalar(distance),
+              ),
+            target,
+          );
+          return;
+        }
         go(
           props.node
             ? new THREE.Vector3(1.04, 1.27, 1.45)
@@ -1256,14 +1289,30 @@ export default function ClusterScene(props: Props) {
         );
         return;
       }
-      const distance = props.node ? 1.5 : fit ? fullDistance : 1.8;
+      const componentBounds = assemblyBounds
+        ? current.current.isolated && obj
+          ? new THREE.Box3().setFromObject(obj)
+          : assemblyBounds
+        : null;
+      const componentSize = componentBounds?.getSize(new THREE.Vector3());
+      const target = componentBounds
+        ? componentBounds.getCenter(new THREE.Vector3())
+        : center;
+      const distance = componentSize
+        ? componentFitDistance(
+            [componentSize.x, componentSize.y, componentSize.z],
+            camera.aspect,
+          )
+        : fit
+          ? fullDistance
+          : 1.8;
       const dir =
         cmd.type === 'front'
           ? new THREE.Vector3(0, 0, 1)
           : cmd.type === 'rear'
             ? new THREE.Vector3(0, 0.08, -1)
-            : new THREE.Vector3(0.55, 0.28, 1).normalize();
-      go(center.clone().add(dir.multiplyScalar(distance)), center);
+            : new THREE.Vector3(0.55, props.node ? 1.05 : 0.28, 1).normalize();
+      go(target.clone().add(dir.multiplyScalar(distance)), target);
     };
     api.current = {
       select: focus,
@@ -1293,8 +1342,12 @@ export default function ClusterScene(props: Props) {
         (-(e.clientY - rect.top) / rect.height) * 2 + 1,
       );
       ray.setFromCamera(pointer, camera);
-      return ray.intersectObjects(picks, false)[0]?.object.userData
-        .hardwareId as string | undefined;
+      return ray.intersectObjects(
+        picks.filter(
+          (p) => objects.get(p.userData.hardwareId)?.visible !== false,
+        ),
+        false,
+      )[0]?.object.userData.hardwareId as string | undefined;
     }
     function onDown(e: PointerEvent) {
       downX = e.clientX;
@@ -1336,6 +1389,7 @@ export default function ClusterScene(props: Props) {
       renderer.setSize(element.clientWidth, element.clientHeight);
       camera.aspect = element.clientWidth / element.clientHeight;
       camera.updateProjectionMatrix();
+      if (componentAssembly) command({ type: 'fit', sequence: 0 });
     });
     observer.observe(element);
     let frame = 0;
@@ -1384,7 +1438,7 @@ export default function ClusterScene(props: Props) {
   }, [props.node, props.model, props.service, props.exploded]);
   useEffect(() => {
     api.current?.select(props.selected);
-  }, [props.selected]);
+  }, [props.selected, props.isolated]);
   useEffect(() => {
     api.current?.command(props.command);
   }, [props.command]);

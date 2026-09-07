@@ -19,6 +19,7 @@ export type ExplorerState = {
   model: ClusterModel;
   topologyPresentation?: 'rack' | 'reference';
   powerRackId?: string;
+  componentPresentation?: 'isolated' | 'assembly';
 };
 export type ExplorerActions = {
   read: () => ExplorerState;
@@ -124,7 +125,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
       name: 'inspect_cluster_hardware',
       title: 'Inspect cluster hardware',
       description:
-        'Select a device or internal component in the visualizer and show its documented specifications. Opens the logical node assembly for internal components.',
+        'Select a device or internal component in the visualizer and show its documented specifications. Internal components open isolated for inspection; use Full assembly or Nearby parts in the interface to restore context.',
       inputSchema: {
         type: 'object',
         properties: { id: { type: 'string' } },

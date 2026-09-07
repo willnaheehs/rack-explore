@@ -3386,3 +3386,60 @@ button:disabled {
 .builder-dialog .configuration-check-body {
   max-height: 240px;
 }
+
+.component-view .scene-title {
+  top: 96px;
+}
+.component-view .scene-title .eyebrow {
+  display: none;
+}
+.component-view .scene-title h1 {
+  font-size: 18px;
+  letter-spacing: -0.3px;
+  margin: 0 0 5px;
+}
+.component-view .scene-title p {
+  font-size: 13px;
+}
+.component-view .assembly-controls {
+  display: grid;
+  gap: 12px;
+}
+.component-view .assembly-controls label {
+  justify-content: space-between;
+  font-size: 14px;
+}
+.component-view .assembly-controls .quiet-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  padding: 2px 0 9px;
+  border-bottom: 1px solid #405059;
+}
+.component-view .component-title {
+  padding-top: 18px;
+}
+@media (max-width: 650px) {
+  .component-view .scene-title {
+    top: 89px;
+    left: 14px;
+  }
+  .component-view .scene-title h1 {
+    font-size: 16px;
+  }
+  .component-view .scene-title p {
+    max-width: 270px;
+    font-size: 12px;
+  }
+  .component-view .assembly-controls {
+    right: 12px;
+    bottom: 115px;
+    padding: 10px;
+    gap: 9px;
+  }
+  .component-view .assembly-controls label,
+  .component-view .assembly-controls .quiet-button {
+    font-size: 12px;
+  }
+}
