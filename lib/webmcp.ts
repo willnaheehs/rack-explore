@@ -208,7 +208,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
     },
     {
       name: 'show_cluster_fabric',
-      title: 'Show network fabric',
+      title: 'Show network network',
       description:
         'Open the compute, front-end Ethernet, or storage topology. Choose rack for the existing device connections or reference for the vendor plan. Optionally load a documented platform from get_cluster_model.availablePlatforms. Interface-only plans explicitly report missing wiring details.',
       inputSchema: {
@@ -230,7 +230,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
           ) ||
           !['compute', 'frontend', 'storage'].includes(String(values.fabric))
         )
-          throw new Error('Fabric must be compute, frontend, or storage.');
+          throw new Error('Network must be compute, frontend, or storage.');
         const fabric = values.fabric as keyof typeof FABRICS;
         if (
           values.platformId !== undefined &&

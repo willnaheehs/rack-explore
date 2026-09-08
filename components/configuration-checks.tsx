@@ -1,12 +1,15 @@
 'use client';
+import { networkText } from '@/lib/network-language';
 import { Check, AlertTriangle, CircleHelp } from 'lucide-react';
 import type { ConfigReport } from '@/lib/config-validation';
+import { networkLabels } from '@/lib/network-language';
 
 export default function ConfigurationChecks({
-  report,
+  report: sourceReport,
 }: {
   report: ConfigReport;
 }) {
+  const report = networkLabels(sourceReport);
   const errors = report.issues.filter((i) => i.level === 'error');
   const reviews = report.issues.filter((i) => i.level === 'review');
   return (
@@ -46,7 +49,7 @@ export default function ConfigurationChecks({
             )}
             <div>
               <strong>{check.area}</strong>
-              <p>{check.detail}</p>
+              <p>{networkText(check.detail)}</p>
             </div>
           </div>
         ))}
@@ -56,7 +59,7 @@ export default function ConfigurationChecks({
             <ul>
               {report.issues.map((issue, i) => (
                 <li key={`${issue.area}-${i}`} className={issue.level}>
-                  {issue.message}
+                  {networkText(issue.message)}
                 </li>
               ))}
             </ul>

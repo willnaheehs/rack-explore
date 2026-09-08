@@ -1,4 +1,5 @@
 'use client';
+import { networkText } from '@/lib/network-language';
 import {
   useState,
   useMemo,
@@ -120,20 +121,20 @@ function Facts({ facts, doc }: { facts: Fact[]; doc: Infrastructure }) {
         <details key={`${f.key}-${i}`} className="infra-fact">
           <summary>
             <span>
-              <small>{f.label}</small>
-              <strong>{valueOf(f)}</strong>
+              <small>{networkText(f.label)}</small>
+              <strong>{networkText(valueOf(f))}</strong>
             </span>
             <EvidenceBadge evidence={f.evidence} />
           </summary>
           <div className="infra-evidence-detail">
             {f.evidence.asOf && <p>As of {f.evidence.asOf}</p>}
-            {f.evidence.note && <p>{f.evidence.note}</p>}
+            {f.evidence.note && <p>{networkText(f.evidence.note)}</p>}
             {f.evidence.sources.map((id) => {
               const s = sources.get(id);
               return (
                 s && (
                   <a href={s.url} target="_blank" rel="noreferrer" key={id}>
-                    {s.title}
+                    {networkText(s.title)}
                     <ArrowUpRight size={14} />
                   </a>
                 )
@@ -435,7 +436,7 @@ export default function InfrastructureWorkspace({
                     onClick={() => inspect(a.id)}
                     aria-current={a.id === selected ? 'page' : undefined}
                   >
-                    {a.name}
+                    {networkText(a.name)}
                   </button>
                 </span>
               ))}
@@ -528,8 +529,8 @@ export default function InfrastructureWorkspace({
                           <AssetIcon category={t.category} size={22} />
                         </span>
                         <span className="infra-asset-copy">
-                          <strong>{a.name}</strong>
-                          <small>{t.name}</small>
+                          <strong>{networkText(a.name)}</strong>
+                          <small>{networkText(t.name)}</small>
                           <span>
                             {a.representation === 'aggregate'
                               ? `${a.quantity.toLocaleString('en-US')} units · aggregate`
@@ -575,14 +576,16 @@ export default function InfrastructureWorkspace({
                         <span className={`infra-medium ${c.medium}`}>
                           {c.medium}
                         </span>
-                        <strong>{c.name}</strong>
+                        <strong>{networkText(c.name)}</strong>
                         <div>
                           <button onClick={() => inspect(from.assetId)}>
-                            {indexed.assets.get(from.assetId)?.name}
+                            {networkText(
+                              indexed.assets.get(from.assetId)?.name,
+                            )}
                           </button>
                           <ChevronRight size={14} />
                           <button onClick={() => inspect(to.assetId)}>
-                            {indexed.assets.get(to.assetId)?.name}
+                            {networkText(indexed.assets.get(to.assetId)?.name)}
                           </button>
                         </div>
                         <p>
@@ -635,7 +638,7 @@ export default function InfrastructureWorkspace({
                   <div>
                     <dt>Definition</dt>
                     <dd>
-                      {type?.name} · revision {type?.revision}
+                      {networkText(type?.name)} · revision {type?.revision}
                     </dd>
                   </div>
                   {asset.quantity > 1 && (
@@ -659,7 +662,7 @@ export default function InfrastructureWorkspace({
                     </summary>
                     {selectedPorts.map((p) => (
                       <div className="infra-interface" key={p.id}>
-                        <strong>{p.name}</strong>
+                        <strong>{networkText(p.name)}</strong>
                         <p>
                           {p.medium} · {p.direction}
                           {p.protocol ? ` · ${p.protocol}` : ''}
@@ -678,7 +681,9 @@ export default function InfrastructureWorkspace({
                 )}
                 <details className="infra-section">
                   <summary>Source evidence</summary>
-                  {asset.evidence.note && <p>{asset.evidence.note}</p>}
+                  {asset.evidence.note && (
+                    <p>{networkText(asset.evidence.note)}</p>
+                  )}
                   {asset.evidence.sources.map((id) => {
                     const s = doc.sources.find((s) => s.id === id);
                     return (
@@ -689,7 +694,7 @@ export default function InfrastructureWorkspace({
                           rel="noreferrer"
                           key={id}
                         >
-                          {s.title}
+                          {networkText(s.title)}
                           <ArrowUpRight size={14} />
                         </a>
                       )
@@ -734,7 +739,7 @@ export default function InfrastructureWorkspace({
                   {doc.sources.map((s) => (
                     <div key={s.id}>
                       <a href={s.url} target="_blank" rel="noreferrer">
-                        {s.title}
+                        {networkText(s.title)}
                         <ArrowUpRight size={14} />
                       </a>
                       <p>
@@ -753,7 +758,7 @@ export default function InfrastructureWorkspace({
                   </summary>
                   {doc.groups.map((g) => (
                     <div key={g.id}>
-                      <strong>{g.name}</strong>
+                      <strong>{networkText(g.name)}</strong>
                       <p>
                         {g.assetIds.length} members. Group membership does not
                         set physical placement.
@@ -779,7 +784,7 @@ export default function InfrastructureWorkspace({
                 <p key={index} className={i.level}>
                   {i.assetId ? (
                     <button onClick={() => inspect(i.assetId!)}>
-                      {i.message}
+                      {networkText(i.message)}
                     </button>
                   ) : (
                     i.message

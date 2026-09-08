@@ -22,6 +22,10 @@ const pool = (
 export function networkCapability(h: Hardware): NetworkCapability {
   const id = profileFor(h).id;
   switch (id) {
+    case 'washington-b300':
+      return {
+        pools: [pool(8, 800, ['ethernet']), pool(2, 400, ['ethernet'])],
+      };
     case 'dgx-h100':
     case 'dgx-h200':
       return {
@@ -105,12 +109,6 @@ export function networkErrors(model: ClusterModel): string[] {
       errors.push(`${link.id}: choose two existing, different devices.`);
       continue;
     }
-    if ([a, b].some((h) => profileFor(h).status === 'Supplied')) {
-      errors.push(
-        `${link.id}: NIC and port populations were not supplied; the 6.4 Tb/s aggregate does not establish a compatible physical cable mode.`,
-      );
-      continue;
-    }
     if (
       !['compute', 'frontend', 'storage'].includes(link.fabric) ||
       ![100, 200, 400, 800].includes(link.rate) ||
@@ -118,7 +116,7 @@ export function networkErrors(model: ClusterModel): string[] {
       link.count < 1 ||
       link.count > 144
     ) {
-      errors.push(`${link.id}: invalid fabric, rate or link count.`);
+      errors.push(`${link.id}: invalid network, rate or link count.`);
       continue;
     }
     const transports = compatibleTransports(a, b, link.rate);
@@ -134,6 +132,21 @@ export function networkErrors(model: ClusterModel): string[] {
     const c = networkCapability(h),
       links = model.links.filter((l) => l.from === h.id || l.to === h.id);
     const used = links.reduce((n, l) => n + l.count, 0);
+    if (profileFor(h).id === 'washington-b300') {
+      for (const network of ['compute', 'storage', 'frontend'] as const) {
+        const assigned = links.filter((l) => l.fabric === network);
+        const limit = network === 'compute' ? 8 : network === 'storage' ? 2 : 0;
+        const rate =
+          network === 'compute' ? 800 : network === 'storage' ? 400 : 0;
+        if (
+          assigned.reduce((sum, l) => sum + l.count, 0) > limit ||
+          assigned.some((l) => l.rate > rate)
+        )
+          errors.push(
+            `${h.name}: ${network} network exceeds its ${limit}-adapter / ${rate} Gb/s per-adapter planning budget. Compute and storage adapters are separate pools; front-end adapters are unspecified.`,
+          );
+      }
+    }
     if (used > portBudget(h))
       errors.push(
         `${h.name}: ${used} links exceed ${portBudget(h)} available logical ports / adapter slots.`,

@@ -21,6 +21,7 @@ export type Profile = {
   status: 'Documented' | 'Preliminary' | 'Supplied';
   clusterNodes?: number;
   recordedAt?: string;
+  rackUnitsBasis?: 'supplied' | 'illustrative';
   units: number;
   depth: number;
   width?: number;

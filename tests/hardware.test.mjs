@@ -245,7 +245,7 @@ test('structured tools validate input and update the same supplied state actions
   assert.equal(state.view, 'topology');
   const before = structuredClone(state);
   assert.throws(() => tools[1].execute({ id: 'bad' }), /Unknown/);
-  assert.throws(() => tools[2].execute({ fabric: 'invalid' }), /Fabric/);
+  assert.throws(() => tools[2].execute({ fabric: 'invalid' }), /Network/);
   assert.throws(() => tools[0].execute({ x: 1 }), /No arguments/);
   assert.deepEqual(state, before);
 });

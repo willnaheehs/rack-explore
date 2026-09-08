@@ -848,70 +848,102 @@ function interfaces(model: ClusterModel): FabricReferences {
   };
 }
 function washington(model: ClusterModel): FabricReferences {
-  const profile = profileFor(model.hardware[0]);
+  const h = model.hardware[0],
+    profile = profileFor(h);
   const refs = profile.sources.map((s) => ({
     ...s,
-    section: 'Supplied cluster profile and component context',
+    section: 'Expanded supplied cluster specification',
   }));
   const make = (fabric: Fabric): FabricReference => {
+    const compute = fabric === 'compute',
+      storage = fabric === 'storage';
     const p = plan(
       `washington-b300-${fabric}`,
-      `Washington B300 · ${fabric === 'storage' ? 'WEKA storage' : fabric === 'compute' ? 'RoCE v2 interconnect' : 'front end'}`,
-      fabric === 'compute'
-        ? '6.4 Tb/s per node'
-        : fabric === 'storage'
-          ? '150 TB shared'
+      `Washington B300 · ${compute ? 'RoCE compute network' : storage ? 'WEKA storage network' : 'front-end network'}`,
+      compute
+        ? '8 × 800 Gb/s / node'
+        : storage
+          ? '2 × 400 Gb/s / node · 150 TB WEKA'
           : 'Not supplied',
-      '32-node supplied configuration · physical cabling unknown',
-      fabric === 'compute'
-        ? '32 nodes, each reporting 6.4 Tb/s aggregate RoCE v2. Adapter models, port counts, switching and oversubscription are not specified.'
-        : fabric === 'storage'
-          ? '150 TB of shared WEKA storage serves the cluster. This service view does not assume dedicated storage appliances or reuse of the nodes’ local NVMe.'
-          : 'The cluster front-end and management network were not included in the supplied configuration.',
+      'One representative node of 32 · adapter inventory supplied · switch connections unconfirmed',
+      compute
+        ? 'Each node has eight ConnectX-8 adapters: 6.4 Tb/s aggregate RoCE v2 capacity. The cluster has 256 compute adapters. Inspect an adapter below; external paths show capability boundaries until the actual switch and cable inventory is supplied.'
+        : storage
+          ? 'Each node has two single-port ConnectX-7 storage adapters: 800 Gb/s summed endpoint capacity. The cluster has 64 storage adapters and a 150 TB WEKA service. Endpoint capacity is not measured storage throughput.'
+          : 'Front-end access and management connections were not specified.',
       refs,
       'Supplied configuration',
     );
     node(
       p,
       'nodes',
-      '32 B300 nodes',
-      '256 GPUs · 4,096 CPU cores',
+      'B300 node 01 · representative',
+      '8 GPUs · 128 CPU cores · 24 DIMMs',
       0,
-      'Each node: 8 B300 GPUs, 2 AMD EPYC 9555 CPUs, a mirrored boot pair and 8 local 3.84 TB NVMe drives. Select any node in the Physical view to inspect its components.',
+      '32 nodes share this supplied configuration. Each has 2.304 TB host DDR5 RAM and a separate 2.304 TB HBM pool. Fifth-generation NVLink provides 1.8 TB/s bidirectional bandwidth per GPU inside the HGX assembly. Exact GPU-to-NIC affinity requires the installed PCIe topology.',
+      h.id,
     );
-    if (fabric === 'compute') {
+    if (compute || storage) {
+      const count = compute ? 8 : 2,
+        rate = compute ? 800 : 400;
+      for (let i = 0; i < count; i++) {
+        const id = `adapter-${i + 1}`;
+        node(
+          p,
+          id,
+          `${compute ? 'ConnectX-8' : 'ConnectX-7'} · ${i + 1}`,
+          `${rate} Gb/s · ${compute ? 'RoCE v2' : 'storage Ethernet'}`,
+          1,
+          compute
+            ? 'Supplied compute adapter with 800 Gb/s aggregate capacity. Exact physical port/breakout mode, GPU affinity, switch destination and RoCE tuning remain unconfirmed.'
+            : 'Supplied single-port 400 GbE storage adapter. Switch destination and storage transport configuration remain unconfirmed.',
+          `${h.id}/${compute ? 'nic' : 'io'}-${i}`,
+        );
+        edge(
+          p,
+          'nodes',
+          id,
+          compute ? 'HGX network attachment' : 'Host storage I/O',
+          {
+            protocol: 'PCIe topology unconfirmed',
+            detail:
+              'Logical attachment; no GPU-to-adapter pairing or PCIe lane map is asserted.',
+          },
+        );
+        edge(p, id, 'network', `${rate} Gb/s capability`, {
+          kind: 'capability',
+          protocol: compute ? 'Ethernet / RoCE v2' : 'Ethernet',
+          rateGbps: rate,
+          detail:
+            'Adapter endpoint capacity, not a verified physical cable or measured traffic path. Destination ports, optics and routing are unknown.',
+        });
+      }
       node(
         p,
-        'roce',
-        'RoCE v2 interconnect',
-        '6.4 Tb/s aggregate / node',
-        1,
-        'Ethernet RDMA is supplied. NIC model/count, per-port speed, switch inventory, rails, optics and cable schedule are unknown. 32 × 6.4 = 204.8 Tb/s summed endpoint rates, not fabric bisection bandwidth or achieved throughput.',
+        'network',
+        compute ? 'External compute network' : 'External storage network',
+        'Switches and wiring not supplied',
+        2,
+        'This boundary does not represent a single switch. Provide switch models/counts, server-to-switch and switch-to-switch port mappings, routing, and network separation to replace it with the installed topology.',
       );
-      edge(p, 'nodes', 'roce', '6.4 Tb/s per node', {
-        kind: 'capability',
-        protocol: 'Ethernet / RoCE v2',
-        detail:
-          'Aggregate capability only; no physical port count or cable rate is inferred.',
-      });
-    } else if (fabric === 'storage') {
-      node(
-        p,
-        'weka',
-        'WEKA shared storage',
-        '150 TB · cluster total',
-        1,
-        '150 TB is user supplied; raw versus usable capacity and data protection are unconfirmed. Backend server count, CPU/RAM, NVMe population and network interfaces are not supplied. Dedicated and converged WEKA deployments are both possible. The nodes contain 983.04 TB of raw local data NVMe in total; whether any of it backs WEKA is unknown, so these capacities are not added together.',
-      );
-      edge(p, 'nodes', 'weka', 'Shared storage service', {
-        kind: 'relationship',
-        protocol: 'Storage transport not supplied',
-        detail:
-          'Logical service association. Storage bandwidth and physical network separation from RoCE compute traffic are unconfirmed.',
-      });
+      if (storage) {
+        node(
+          p,
+          'weka',
+          'WEKA shared storage',
+          '150 TB · cluster total',
+          3,
+          'Backend server, drive and NIC inventory, raw versus usable capacity and dedicated versus converged deployment remain unknown. Whether local NVMe backs WEKA is unconfirmed; capacities are not added together.',
+        );
+        edge(p, 'network', 'weka', 'Shared storage service', {
+          protocol: 'Storage transport unconfirmed',
+          detail:
+            'Logical service relationship; storage-side port speeds and backend connections are not specified.',
+        });
+      }
     }
     p.limitations.push(
-      'Supplied configuration, not an independently observed installation. No switch bill of materials, numbered ports or external cables are asserted.',
+      'Adapter counts and nominal rates are supplied. Switch population, numbered cable endpoints, oversubscription, VLAN/routing, MTU, PFC/ECN and observed traffic paths still require operator data.',
     );
     return p;
   };

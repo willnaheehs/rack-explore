@@ -1,4 +1,5 @@
 'use client';
+import { networkText } from '@/lib/network-language';
 import { useState, useRef, useMemo } from 'react';
 import { validateConfiguration } from '@/lib/config-validation';
 import { connectionProtocol, type Transport } from '@/lib/network-validation';
@@ -290,7 +291,7 @@ export default function RackBuilder({
                       >
                         <GripVertical size={14} />
                         <div>
-                          <strong>{p.name}</strong>
+                          <strong>{networkText(p.name)}</strong>
                           <small>
                             {p.maker} · {p.family}
                           </small>
@@ -440,9 +441,10 @@ export default function RackBuilder({
                 <span className="eyebrow">
                   {editing ? 'MOVE EQUIPMENT' : 'PLACE EQUIPMENT'}
                 </span>
-                <h3>{profile.name}</h3>
+                <h3>{networkText(profile.name)}</h3>
                 <p>
-                  {profile.status === 'Supplied'
+                  {profile.status === 'Supplied' &&
+                  profile.rackUnitsBasis !== 'supplied'
                     ? `${profile.units}U display envelope · actual size / cooling unknown`
                     : `${profile.units}U · ${profile.cooling} cooled`}
                   <br />
@@ -513,7 +515,7 @@ export default function RackBuilder({
                             setStartU(h.u);
                           }}
                         >
-                          <strong>{h.name}</strong>
+                          <strong>{networkText(h.name)}</strong>
                           <small>
                             U{h.u}–{h.u + h.height - 1}
                           </small>
@@ -602,10 +604,10 @@ export default function RackBuilder({
                   />
                 </label>
                 <label className="field-label" htmlFor="connection-fabric">
-                  Fabric
+                  Network
                   <Choice
                     id="connection-fabric"
-                    label="Connection fabric"
+                    label="Connection network"
                     value={fabric}
                     onChange={(v) => setFabric(v as Fabric)}
                     options={Object.entries(FABRICS).map(([value, f]) => ({
@@ -683,11 +685,17 @@ export default function RackBuilder({
                   <div className="planned-link" key={l.id}>
                     <div>
                       <strong>
-                        {draft.hardware.find((h) => h.id === l.from)?.name} →{' '}
-                        {draft.hardware.find((h) => h.id === l.to)?.name}
+                        {networkText(
+                          draft.hardware.find((h) => h.id === l.from)?.name,
+                        )}{' '}
+                        →{' '}
+                        {networkText(
+                          draft.hardware.find((h) => h.id === l.to)?.name,
+                        )}
                       </strong>
                       <span>
-                        {FABRICS[l.fabric].name} · {l.count} × {l.rate} Gb/s
+                        {networkText(FABRICS[l.fabric].name)} · {l.count} ×{' '}
+                        {l.rate} Gb/s
                         {' · '}
                         {connectionProtocol(draft, l) === 'ethernet'
                           ? 'Ethernet'
@@ -719,7 +727,7 @@ export default function RackBuilder({
                 <h4>Logical port / slot capacity</h4>
                 {draft.hardware.map((h) => (
                   <p key={h.id}>
-                    {h.name}:{' '}
+                    {networkText(h.name)}:{' '}
                     {draft.links
                       .filter((l) => l.from === h.id || l.to === h.id)
                       .reduce((n, l) => n + l.count, 0)}{' '}

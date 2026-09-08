@@ -281,15 +281,11 @@ export function addConnection(
     b = model.hardware.find((h) => h.id === input.to);
   if (!a || !b || a.id === b.id)
     throw new Error('Choose two different devices.');
-  if ([a, b].some((h) => profileFor(h).status === 'Supplied'))
-    throw new Error(
-      'NIC and port populations were not supplied. Confirm them before adding physical cables; aggregate RoCE capacity does not specify a cable mode.',
-    );
   if (
     !['compute', 'storage', 'frontend'].includes(input.fabric) ||
     ![100, 200, 400, 800].includes(input.rate)
   )
-    throw new Error('Choose a supported fabric and nominal rate.');
+    throw new Error('Choose a supported network and nominal rate.');
   if (!Number.isInteger(input.count) || input.count < 1 || input.count > 144)
     throw new Error('Link count must be between 1 and 144.');
   if (model.links.some((l) => l.id === input.id))

@@ -1,6 +1,14 @@
 /* oxlint-disable jsx-a11y/prefer-tag-over-role, jsx-a11y/no-noninteractive-tabindex -- SVG connection paths expose keyboard selection. */
 'use client';
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { networkText } from '@/lib/network-language';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
+import { networkLabels } from '@/lib/network-language';
 import {
   ArrowUpRight,
   Cable,
@@ -13,7 +21,7 @@ import {
 import type { FabricReference } from '@/lib/fabric-references';
 
 export default function ReferenceTopology({
-  plan,
+  plan: sourcePlan,
   color,
   onInspect,
 }: {
@@ -21,6 +29,7 @@ export default function ReferenceTopology({
   color: string;
   onInspect: (id: string) => void;
 }) {
+  const plan = useMemo(() => networkLabels(sourcePlan), [sourcePlan]);
   const [selected, setSelected] = useState(
     plan.connections.find((c) => c.kind === 'link')?.id ?? plan.nodes[0]?.id,
   );
@@ -79,12 +88,12 @@ export default function ReferenceTopology({
                 : 'Checked 6 Sep 2026'}
             </span>
           </div>
-          <h1>{plan.title}</h1>
+          <h1>{networkText(plan.title)}</h1>
           <p>{plan.scope}</p>
         </div>
         <strong className="reference-speed">{plan.speed}</strong>
       </div>
-      <p className="reference-summary">{plan.summary}</p>
+      <p className="reference-summary">{networkText(plan.summary)}</p>
       {plan.sharedWith && (
         <div className="reference-shared">
           <Network size={15} />
@@ -111,7 +120,7 @@ export default function ReferenceTopology({
               viewBox={`0 0 ${width} ${height}`}
               width="100%"
               height="100%"
-              aria-label="Sourced fabric connections"
+              aria-label="Sourced network connections"
             >
               {plan.connections.map((c) => {
                 const a = placed.find((n) => n.id === c.from)!,
@@ -154,7 +163,7 @@ export default function ReferenceTopology({
                       onFocus={() => setHovered(c.id)}
                       onBlur={() => setHovered(null)}
                     >
-                      <title>{c.label}</title>
+                      <title>{networkText(c.label)}</title>
                     </path>
                     {active && (
                       <g pointerEvents="none">
@@ -173,7 +182,7 @@ export default function ReferenceTopology({
                           fill={color}
                           fontSize={12}
                         >
-                          {c.label}
+                          {networkText(c.label)}
                         </text>
                       </g>
                     )}
@@ -197,7 +206,7 @@ export default function ReferenceTopology({
                 onBlur={() => setHovered(null)}
                 aria-pressed={selected === n.id}
               >
-                <span>{n.title}</span>
+                <span>{networkText(n.title)}</span>
                 <small>{n.subtitle}</small>
               </button>
             ))}
@@ -205,7 +214,7 @@ export default function ReferenceTopology({
         </div>
         <aside
           className="reference-inspector"
-          aria-label="Fabric connection details"
+          aria-label="Network connection details"
           aria-live="polite"
         >
           <div className="reference-detail-label">
@@ -273,7 +282,7 @@ export default function ReferenceTopology({
                   className="reference-connection-button"
                   onClick={() => setSelected(c.id)}
                 >
-                  {c.label}
+                  {networkText(c.label)}
                   <small>{name(c.from === item.id ? c.to : c.from)}</small>
                 </button>
               ))}
@@ -287,8 +296,8 @@ export default function ReferenceTopology({
               rel="noreferrer"
             >
               <span>
-                {s.title}
-                <small>{s.section}</small>
+                {networkText(s.title)}
+                <small>{networkText(s.section)}</small>
               </span>
               <ExternalLink size={13} />
             </a>

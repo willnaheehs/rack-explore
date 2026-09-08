@@ -1,4 +1,5 @@
 'use client';
+import { networkText } from '@/lib/network-language';
 import { useState } from 'react';
 import {
   Search,
@@ -24,9 +25,15 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { VISIBLE_CATALOG, CATALOG_DATE, type Profile } from '@/lib/catalog';
+import {
+  VISIBLE_CATALOG as SOURCE_CATALOG,
+  CATALOG_DATE,
+  type Profile,
+} from '@/lib/catalog';
+import { networkLabels } from '@/lib/network-language';
 import { DEFAULT_MODEL, type ClusterModel } from '@/lib/hardware';
 import { modelForProfile } from '@/lib/rack-builder';
+const VISIBLE_CATALOG = SOURCE_CATALOG.map((p) => networkLabels(p));
 export function Choice({
   value,
   onChange,
@@ -54,7 +61,7 @@ export function Choice({
       <SelectContent>
         {options.map((o) => (
           <SelectItem key={o.value} value={o.value}>
-            {o.label}
+            {networkText(o.label)}
           </SelectItem>
         ))}
       </SelectContent>
@@ -201,7 +208,7 @@ export default function CatalogPanel({
             <div>
               <strong>DGX H100 reference cluster</strong>
               <span>
-                4 racks · 64 GPUs · three connected fabrics · 1 PB shared
+                4 racks · 64 GPUs · three connected networks · 1 PB shared
                 storage
               </span>
             </div>
@@ -227,7 +234,7 @@ export default function CatalogPanel({
                   </span>
                 </div>
                 <DeviceElevation profile={p} />
-                <h3>{p.name}</h3>
+                <h3>{networkText(p.name)}</h3>
                 <p>{p.family}</p>
                 <div className="platform-facts">
                   <span>
@@ -235,7 +242,7 @@ export default function CatalogPanel({
                       ? `${p.gpuCount * (p.clusterNodes ?? 1)} GPUs${p.clusterNodes ? ' total' : ''}`
                       : p.category === 'storage'
                         ? 'NVMe flash'
-                        : 'Network fabric'}
+                        : 'Network network'}
                   </span>
                   <span>
                     {p.cooling === 'Direct liquid' ? (
@@ -265,12 +272,12 @@ export default function CatalogPanel({
                 </div>
                 {detail === p.id && (
                   <div className="catalog-detail">
-                    <p>{p.description}</p>
+                    <p>{networkText(p.description)}</p>
                     {p.specs.map((s) => (
                       <div className="catalog-spec" key={s.label}>
-                        <span>{s.label}</span>
+                        <span>{networkText(s.label)}</span>
                         <strong>{s.value}</strong>
-                        {s.note && <small>{s.note}</small>}
+                        {s.note && <small>{networkText(s.note)}</small>}
                       </div>
                     ))}
                     {p.sources.map((s) => (
@@ -280,7 +287,7 @@ export default function CatalogPanel({
                         target="_blank"
                         rel="noreferrer"
                       >
-                        {s.title}
+                        {networkText(s.title)}
                         <ArrowUpRight size={13} />
                       </a>
                     ))}

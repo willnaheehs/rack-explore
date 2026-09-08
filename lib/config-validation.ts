@@ -306,17 +306,17 @@ export function validateConfiguration(model: ClusterModel): ConfigReport {
     issue(
       'review',
       'Placement',
-      'Supplied configuration: rack count, chassis size, mounting and positions are illustrative. Passing geometric checks only validates the display arrangement.',
+      'Supplied configuration: 8U height and air cooling are supplied; rack count, depth, mounting details and positions remain illustrative. Passing geometric checks only validates the display arrangement.',
     );
     issue(
       'review',
       'Components',
-      'Supplied configuration: confirm the 2.3 TB memory pool and DIMM population, chassis / board SKUs, cooling and PSU inventory. RAID-1 boot capacity is 1.92 TB usable per node before overhead.',
+      'Supplied configuration: 24 × 96 GB DDR5-6400 DIMMs are specified. Confirm the chassis / board SKUs and PSU / fan inventory. RAID-1 boot capacity is 1.92 TB usable per node before overhead.',
     );
     issue(
       'review',
       'Networking',
-      '6.4 Tb/s RoCE v2 is an aggregate per-node rate. NIC and port populations are unknown; physical cable validation requires their actual specifications.',
+      'Eight ConnectX-8 compute and two single-port ConnectX-7 storage adapters are supplied per node. Confirm ConnectX-8 port/breakout mode, GPU affinity, switch models, cable endpoints and RoCE configuration.',
     );
     issue(
       'review',

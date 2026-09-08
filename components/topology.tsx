@@ -1,5 +1,6 @@
 /* oxlint-disable jsx-a11y/prefer-tag-over-role, jsx-a11y/no-noninteractive-tabindex -- SVG nodes need explicit interactive roles; the scrollable graph must be keyboard reachable. */
 'use client';
+import { networkText } from '@/lib/network-language';
 import { useMemo, useState } from 'react';
 import ReferenceTopology from './reference-topology';
 import { MousePointer2, Network, Minus, Plus } from 'lucide-react';
@@ -145,7 +146,7 @@ function RackTopology({
         },
         {
           y: 254,
-          label: 'DEDICATED STORAGE FABRIC',
+          label: 'DEDICATED STORAGE NETWORK',
           note: '2 × QM9700 · mixed 400G / 200G ports',
         },
         {
@@ -169,12 +170,12 @@ function RackTopology({
     <div className="topology-view">
       <div className="topology-heading">
         <div>
-          <h1>{f.name}</h1>
+          <h1>{networkText(f.name)}</h1>
           <p>
             {model.id === 'h100-cluster'
               ? `The eight-node rack layout. ${f.description} Select any device to inspect its hardware.`
               : model.racks.some((r) => r.mount === 'NVL72')
-                ? 'The rack’s internal NVLink domain is separate from external compute, front-end and storage fabrics. No external fabric has been configured.'
+                ? 'The rack’s internal NVLink domain is separate from external compute, front-end and storage networks. No external network has been configured.'
                 : 'Connections reflect your planned layout. No links are inferred from placement.'}
           </p>
         </div>
@@ -227,7 +228,7 @@ function RackTopology({
                 fontSize="16"
                 textAnchor="middle"
               >
-                Use Build a rack → Plan connections to design this fabric.
+                Use Build a rack → Plan connections to design this network.
               </text>
             </g>
           )}
@@ -241,7 +242,7 @@ function RackTopology({
                 fontFamily="monospace"
                 letterSpacing="1.1"
               >
-                {h.label}
+                {networkText(h.label)}
               </text>
               <text
                 x="980"
@@ -250,7 +251,7 @@ function RackTopology({
                 fill="#6c858f"
                 fontSize="12"
               >
-                {h.note}
+                {networkText(h.note)}
               </text>
             </g>
           ))}
@@ -269,7 +270,7 @@ function RackTopology({
             const active = l.from === focus || l.to === focus;
             return (
               <g key={l.id}>
-                <title>{l.label}</title>
+                <title>{networkText(l.label)}</title>
                 <path
                   d={path}
                   fill="none"

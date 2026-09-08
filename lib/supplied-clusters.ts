@@ -1,31 +1,4 @@
-import type { Profile, Part } from './catalog.ts';
-
-const source = {
-  title: 'Supplied Washington cluster configuration · 8 September 2026',
-  url: 'https://github.com/willnaheehs/rack-explore/blob/main/docs/washington-b300.md',
-};
-const block = (
-  key: string,
-  kind: Part['kind'],
-  title: string,
-  description: string,
-): Part => ({
-  key,
-  kind,
-  title,
-  count: 1,
-  model: title,
-  description,
-  population: 'representative',
-  schematic: true,
-  specs: [
-    {
-      label: 'Board details',
-      value:
-        'Functional block; board SKU, count and physical layout not supplied',
-    },
-  ],
-});
+import type { Profile } from './catalog.ts';
 
 export const WASHINGTON_B300: Profile = {
   id: 'washington-b300',
@@ -37,7 +10,7 @@ export const WASHINGTON_B300: Profile = {
   units: 8,
   depth: 0.9,
   mount: '19-inch',
-  cooling: 'Not supplied',
+  cooling: 'Air',
   gpuCount: 8,
   gpuMemoryGB: 288,
   color: '#80d4c9',
@@ -45,11 +18,11 @@ export const WASHINGTON_B300: Profile = {
   clusterNodes: 32,
   recordedAt: '2026-09-08',
   description:
-    '32 servers in Washington, US: 256 B300 GPUs, 4,096 CPU cores and 150 TB of shared WEKA storage. Each node has 8 B300 GPUs, two AMD EPYC 9555 CPUs and 30.72 TB of raw local NVMe. Eight display racks with four 8U envelopes each illustrate the cluster; actual chassis dimensions, rack count and placement are not supplied.',
+    '32 servers in Washington, US: 256 B300 SXM GPUs, 4,096 CPU cores and 150 TB of shared WEKA storage. Each air-cooled 8U node has 2.304 TB DDR5 system RAM, 2.304 TB GPU HBM and 30.72 TB raw local NVMe. Eight display racks illustrate the cluster; actual rack count, placement and chassis depth remain unknown.',
   specs: [
     {
       label: 'Configuration basis',
-      value: 'User-supplied profile + cluster count; recorded 8 September 2026',
+      value: 'Expanded user-supplied HGX specification · 8 September 2026',
     },
     {
       label: 'Cluster population',
@@ -62,44 +35,57 @@ export const WASHINGTON_B300: Profile = {
     },
     {
       label: 'Per-node accelerators',
-      value: '8 × NVIDIA B300',
-      note: '288 GB HBM3e per GPU is a platform reference specification; installed variant needs confirmation.',
+      value: '8 × NVIDIA B300 SXM (Blackwell Ultra)',
+      note: '288 GB HBM3e per GPU · 2.304 TB GPU memory per node.',
     },
-    { label: 'Per-node CPU', value: '2 × AMD EPYC 9555 · 128 cores total' },
     {
-      label: 'System memory as supplied',
-      value: '2.3 TB per node',
-      note: 'Host DDR5 capacity and DIMM population need confirmation: 2.3 TB also matches nominal aggregate B300 GPU memory. These are separate memory pools.',
+      label: 'Per-node CPU',
+      value: '2 × AMD EPYC 9555 · 128 cores total',
+    },
+    {
+      label: 'NVLink',
+      value: '5th generation · 1.8 TB/s per GPU (bidirectional)',
+      note: 'Internal GPU communication. This is separate from the 6.4 Tb/s external RoCE network.',
+    },
+    {
+      label: 'System RAM',
+      value: '24 × 96 GB DDR5-6400 ECC RDIMM · 2.304 TB',
+      note: 'Host RAM is separate from the 2.304 TB of GPU HBM. Module placement is schematic.',
     },
     {
       label: 'Boot storage',
       value: '2 × 1.92 TB · RAID-1',
-      note: '3.84 TB raw; 1.92 TB usable per node before overhead. Drive interface and form factor not supplied.',
+      note: 'Earlier profile specifies this pair: 3.84 TB raw / 1.92 TB usable before overhead. The expanded sheet says “3.84 TB boot RAID-1” without a capacity basis; confirm if the intended usable capacity changed.',
     },
     {
       label: 'Local data storage',
-      value: '8 × 3.84 TB NVMe / node · 30.72 TB raw',
-      note: '983.04 TB raw across 32 nodes. Data protection and usable capacity not supplied; do not add this to WEKA capacity.',
+      value: '8 × 3.84 TB U.2 NVMe Gen5 / node · 30.72 TB raw',
+      note: '983.04 TB raw across 32 nodes. Data protection and usable capacity remain unspecified.',
     },
     {
       label: 'Shared storage',
       value: '150 TB WEKA · cluster total',
-      note: 'Raw versus usable capacity, dedicated versus converged deployment, backend servers and storage fabric not supplied. Inspect the service in Storage fabric.',
+      note: 'Backend hardware, raw versus usable capacity and connection to the storage switches remain unspecified. Inspect the Storage network view.',
+    },
+    {
+      label: 'Storage network adapters',
+      value: '2 × ConnectX-7 · single-port 400 GbE / node',
+      note: '800 Gb/s summed endpoint capacity per node; storage service throughput and transport configuration are unconfirmed.',
     },
     {
       label: 'Interconnect',
-      value: '6.4 Tb/s RoCE v2 per node',
-      note: 'Aggregate endpoint rate; NIC count, port rates and switch topology not supplied. This is not measured throughput or bisection bandwidth.',
+      value: '8 × ConnectX-8 · 800 GbE RoCE v2 / adapter',
+      note: '6.4 Tb/s aggregate per node. Configured port/breakout mode, switch inventory and cabling are still needed.',
     },
     {
       label: 'Physical layout',
-      value: 'Illustrative · 8 display racks × 4 nodes',
-      note: '8U / 0.9 m server envelopes and 42U racks are visualization assumptions, not validated installed dimensions.',
+      value: '8U air-cooled chassis · rack placement illustrative',
+      note: 'Eight display racks × four nodes. Chassis depth (drawn as 0.9 m), OEM SKU, rack count and U positions remain unconfirmed.',
     },
     {
       label: 'Power and cooling',
-      value: 'Not supplied',
-      note: 'PSU and fan populations, electrical limits and cooling design are unknown. Power view uses an editable 15 kW per-node planning allowance.',
+      value: 'Air-cooled · electrical specification not supplied',
+      note: 'PSU and fan counts, power limits and airflow ratings remain unknown. Power view uses an editable 15 kW/node allowance.',
     },
   ],
   parts: [
@@ -108,15 +94,22 @@ export const WASHINGTON_B300: Profile = {
       kind: 'gpu',
       title: 'Accelerators',
       count: 8,
-      model: 'NVIDIA B300',
+      model: 'NVIDIA B300 SXM',
       population: 'fixed',
       description:
-        'One of eight supplied B300 GPUs per node. Package geometry is schematic; HBM values are platform reference specifications.',
+        'One of eight supplied Blackwell Ultra SXM GPU modules per node. The 288 GB HBM3e capacity is supplied; package placement remains schematic.',
       specs: [
-        { label: 'Memory per GPU', value: '288 GB HBM3e (platform reference)' },
+        {
+          label: 'Memory per GPU',
+          value: '288 GB HBM3e',
+        },
+        {
+          label: 'GPU memory per node',
+          value: '2.304 TB HBM3e',
+        },
         {
           label: 'GPU interconnect',
-          value: 'NVLink (B300 platform reference; baseboard SKU unconfirmed)',
+          value: '5th-generation NVLink · 1.8 TB/s per GPU (bidirectional)',
         },
       ],
     },
@@ -130,26 +123,46 @@ export const WASHINGTON_B300: Profile = {
       description:
         'One of two specified AMD host processors; 64 physical cores each, 128 per node.',
       specs: [
-        { label: 'Physical cores per CPU', value: '64' },
-        { label: 'CPU cores per node', value: '128' },
-        { label: 'CPU sockets', value: '2' },
+        {
+          label: 'Physical cores per CPU',
+          value: '64',
+        },
+        {
+          label: 'CPU cores per node',
+          value: '128',
+        },
+        {
+          label: 'CPU sockets',
+          value: '2',
+        },
       ],
     },
     {
-      ...block(
-        'memory',
-        'memory',
-        'System memory',
-        'A single block represents the supplied 2.3 TB memory figure, not one DIMM. Confirm host DDR5 capacity separately from GPU HBM.',
-      ),
+      key: 'memory',
+      kind: 'memory',
+      title: 'System memory',
+      count: 24,
+      model: '96 GB DDR5-6400 ECC RDIMM',
+      description:
+        'One of 24 supplied host memory modules. Total host RAM is 2.304 TB, separate from GPU HBM; exact slots and channel population require the OEM board map.',
+      population: 'fixed',
+      schematic: false,
       specs: [
         {
-          label: 'Supplied capacity',
-          value: '2.3 TB per node; memory pool needs confirmation',
+          label: 'Capacity per module',
+          value: '96 GB',
         },
         {
-          label: 'DIMM population',
-          value: 'Not supplied; one aggregate block shown',
+          label: 'Technology',
+          value: 'DDR5-6400 ECC RDIMM',
+        },
+        {
+          label: 'DIMMs per node',
+          value: '24',
+        },
+        {
+          label: 'Host RAM per node',
+          value: '2.304 TB',
         },
       ],
     },
@@ -163,13 +176,22 @@ export const WASHINGTON_B300: Profile = {
       description:
         'One drive in the mirrored boot pair. The module illustration does not establish M.2, SATA or NVMe interface or form factor.',
       specs: [
-        { label: 'Capacity per drive', value: '1.92 TB' },
-        { label: 'Protection', value: 'RAID-1 mirror' },
+        {
+          label: 'Capacity per drive',
+          value: '1.92 TB',
+        },
+        {
+          label: 'Protection',
+          value: 'RAID-1 mirror',
+        },
         {
           label: 'Pair capacity',
           value: '3.84 TB raw · 1.92 TB usable before overhead',
         },
-        { label: 'Interface / form factor', value: 'Not supplied' },
+        {
+          label: 'Interface / form factor',
+          value: 'Not supplied',
+        },
       ],
     },
     {
@@ -177,55 +199,157 @@ export const WASHINGTON_B300: Profile = {
       kind: 'nvme',
       title: 'Local data drives',
       count: 8,
-      model: '3.84 TB NVMe SSD',
+      model: '3.84 TB U.2 NVMe Gen5 SSD',
       population: 'fixed',
       description:
-        'One of eight local data SSDs. Controller and flash geometry is explanatory; manufacturer, form factor, flash type and drive protection are unspecified.',
+        'One of eight supplied U.2 PCIe Gen5 NVMe SSDs. Controller and flash geometry is illustrative; manufacturer and protection policy remain unspecified.',
       specs: [
-        { label: 'Capacity per drive', value: '3.84 TB' },
-        { label: 'Node raw capacity', value: '30.72 TB' },
-        { label: 'Data protection / usable capacity', value: 'Not supplied' },
+        {
+          label: 'Capacity per drive',
+          value: '3.84 TB',
+        },
+        {
+          label: 'Node raw capacity',
+          value: '30.72 TB',
+        },
+        {
+          label: 'Data protection / usable capacity',
+          value: 'Not supplied',
+        },
         {
           label: 'Relationship to WEKA',
           value:
             'Unknown; local drives may or may not back the shared storage service',
         },
+        {
+          label: 'Interface / form factor',
+          value: 'PCIe Gen5 NVMe · U.2',
+        },
       ],
     },
     {
-      ...block(
-        'nic',
-        'nic',
-        'RoCE v2 interfaces',
-        'One aggregate network block represents the reported interconnect. It does not assert one NIC, eight NICs or a particular ConnectX SKU.',
-      ),
+      key: 'nic',
+      kind: 'nic',
+      title: 'RoCE compute adapters',
+      count: 8,
+      model: 'NVIDIA ConnectX-8 SuperNIC',
+      description:
+        'One of eight supplied ConnectX-8 adapters for the compute network. Each provides 800 Gb/s aggregate RoCE v2 capability. Port/breakout mode and GPU affinity need the installed configuration.',
+      population: 'fixed',
+      schematic: false,
       specs: [
-        { label: 'Node aggregate rate', value: '6.4 Tb/s RoCE v2' },
-        { label: 'NIC / port population', value: 'Not supplied' },
-        { label: 'Switches / optics / cabling', value: 'Not supplied' },
+        {
+          label: 'Adapter aggregate rate',
+          value: '800 Gb/s Ethernet · RoCE v2',
+        },
+        {
+          label: 'Compute adapters per node',
+          value: '8',
+        },
+        {
+          label: 'Node aggregate rate',
+          value: '6.4 Tb/s',
+        },
+        {
+          label: 'Physical ports / breakout',
+          value:
+            'Configured mode not supplied; adapter bandwidth does not identify cage count',
+        },
+        {
+          label: 'GPU affinity / switch port',
+          value: 'Installed mapping not supplied',
+        },
       ],
     },
-    block(
-      'motherboard',
-      'board',
-      'Host motherboard',
-      'Functional CPU, memory and I/O board. Manufacturer, board revision and placement need the actual chassis specification.',
-    ),
-    block(
-      'baseboard',
-      'board',
-      'GPU baseboard',
-      'Functional placement of the eight GPUs. Baseboard SKU and installed NVSwitch population are not supplied.',
-    ),
-    block(
-      'backplane',
-      'backplane',
-      'Storage connectivity',
-      'Functional route from the local SSDs to host I/O. Backplane, cabling and controller topology are not supplied.',
-    ),
+    {
+      key: 'io',
+      kind: 'nic',
+      title: 'Storage network adapters',
+      count: 2,
+      model: 'NVIDIA ConnectX-7',
+      population: 'fixed',
+      description:
+        'One of two supplied single-port 400 GbE storage adapters. This is a separate endpoint pool from the eight RoCE compute adapters. Backend switches and storage transport remain unconfirmed.',
+      specs: [
+        {
+          label: 'Port configuration',
+          value: 'Single-port 400 GbE',
+        },
+        {
+          label: 'Storage adapters per node',
+          value: '2',
+        },
+        {
+          label: 'Node summed endpoint rate',
+          value: '800 Gb/s',
+        },
+        {
+          label: 'Storage protocol / switch port',
+          value:
+            'Not supplied; Ethernet alone does not establish RoCE or the WEKA transport',
+        },
+      ],
+    },
+    {
+      key: 'motherboard',
+      kind: 'board',
+      title: 'Host motherboard',
+      count: 1,
+      model: 'Host motherboard',
+      description:
+        'Functional CPU, memory and I/O board. Manufacturer, board revision and placement need the actual chassis specification.',
+      population: 'representative',
+      schematic: true,
+      specs: [
+        {
+          label: 'Board details',
+          value:
+            'Functional block; board SKU, count and physical layout not supplied',
+        },
+      ],
+    },
+    {
+      key: 'baseboard',
+      kind: 'board',
+      title: 'GPU baseboard',
+      count: 1,
+      model: 'GPU baseboard',
+      description:
+        'HGX B300 GPU assembly with eight SXM GPUs and fifth-generation NVLink. Exact board revision, NVSwitch population and package positions require the OEM bill of materials.',
+      population: 'representative',
+      schematic: true,
+      specs: [
+        {
+          label: 'Board details',
+          value:
+            'Functional block; board SKU, count and physical layout not supplied',
+        },
+      ],
+    },
+    {
+      key: 'backplane',
+      kind: 'backplane',
+      title: 'Storage connectivity',
+      count: 1,
+      model: 'Storage connectivity',
+      description:
+        'Functional route from the local SSDs to host I/O. Backplane, cabling and controller topology are not supplied.',
+      population: 'representative',
+      schematic: true,
+      specs: [
+        {
+          label: 'Board details',
+          value:
+            'Functional block; board SKU, count and physical layout not supplied',
+        },
+      ],
+    },
   ],
   sources: [
-    source,
+    {
+      title: 'Supplied Washington cluster configuration · 8 September 2026',
+      url: 'https://github.com/willnaheehs/rack-explore/blob/main/docs/washington-b300.md',
+    },
     {
       title: 'AMD EPYC 9555 · 64 cores per processor',
       url: 'https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9555.html',
@@ -240,4 +364,5 @@ export const WASHINGTON_B300: Profile = {
       url: 'https://www.weka.io/resources/white-paper/wekaio-architectural-whitepaper',
     },
   ],
+  rackUnitsBasis: 'supplied',
 };

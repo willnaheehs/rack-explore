@@ -54,9 +54,7 @@ test('Washington preserves the supplied 32-node population and inspectable per-n
     assert.ok(
       p.parts
         .filter((c) =>
-          ['memory', 'nic', 'motherboard', 'baseboard', 'backplane'].includes(
-            c.key,
-          ),
+          ['motherboard', 'baseboard', 'backplane'].includes(c.key),
         )
         .every((c) => c.population === 'representative'),
     );
@@ -78,7 +76,7 @@ test('Washington preserves the supplied 32-node population and inspectable per-n
   );
   assert.match(
     model.description,
-    /actual chassis dimensions, rack count and placement are not supplied/,
+    /actual rack count, placement and chassis depth remain unknown/,
   );
   const report = validateConfiguration(model);
   assert.deepEqual(
@@ -87,8 +85,8 @@ test('Washington preserves the supplied 32-node population and inspectable per-n
   );
   for (const text of [
     'rack count',
-    'memory pool',
-    'NIC and port',
+    '24 × 96 GB',
+    'ConnectX-8',
     '150 TB WEKA',
   ])
     assert.ok(
@@ -102,7 +100,7 @@ test('RoCE and WEKA remain supplied capacities, without fabricated physical port
     refs = m.fabricReferences;
   assert.deepEqual(m.links, []);
   assert.equal(refs.compute.status, 'Supplied configuration');
-  assert.match(refs.compute.speed, /6.4 Tb\/s per node/);
+  assert.match(refs.compute.speed, /8 × 800 Gb\/s/);
   assert.equal(
     refs.storage.nodes.find((n) => n.id === 'weka').subtitle,
     '150 TB · cluster total',
@@ -111,25 +109,42 @@ test('RoCE and WEKA remain supplied capacities, without fabricated physical port
     for (const c of p.connections) {
       assert.notEqual(c.kind, 'link');
       assert.equal(c.count, undefined);
-      assert.equal(c.rateGbps, undefined);
+      if (c.kind === 'capability') assert.ok([400, 800].includes(c.rateGbps));
     }
   assert.equal(refs.frontend.connections.length, 0);
   assert.ok(!m.hardware.some((h) => profileFor(h).category === 'storage'));
   let custom = placeHardware(blankModel(), 'washington-b300', 'R01', 1, 'node');
   custom = placeHardware(custom, 'sn5600', 'R01', 10, 'switch');
+  assert.equal(
+    addConnection(custom, {
+      from: 'node',
+      to: 'switch',
+      id: 'wire',
+      fabric: 'compute',
+      count: 8,
+      rate: 800,
+      protocol: 'ethernet',
+    }).links.length,
+    1,
+  );
   assert.throws(
     () =>
       addConnection(custom, {
         from: 'node',
         to: 'switch',
-        id: 'wire',
-        fabric: 'compute',
-        count: 8,
-        rate: 800,
+        id: 'bad-storage',
+        fabric: 'storage',
+        count: 3,
+        rate: 400,
         protocol: 'ethernet',
       }),
-    /not supplied|compatible/,
+    /storage network exceeds/,
   );
+  const p = profileFor(m.hardware[0]);
+  assert.equal(p.parts.find((p) => p.key === 'memory').count, 24);
+  assert.equal(p.parts.find((p) => p.key === 'nic').count, 8);
+  assert.equal(p.parts.find((p) => p.key === 'io').count, 2);
+  assert.equal(p.cooling, 'Air');
 });
 
 test('cluster and logical WEKA service survive portable export and reopen without silent loss', () => {

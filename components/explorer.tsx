@@ -69,6 +69,7 @@ import {
 } from '@/lib/webmcp';
 import Topology from './topology';
 import { withReferenceFabrics } from '@/lib/fabric-references';
+import { networkLabels, networkText } from '@/lib/network-language';
 import PowerView from './power-view';
 import CatalogPanel from './catalog-panel';
 import RackBuilder from './rack-builder';
@@ -444,7 +445,7 @@ export default function Explorer() {
                 ? resolveHardware(h.parent)?.name
                 : `RACK ${h.rack} · U${h.u}${h.height > 1 ? `–${h.u + h.height - 1}` : ''}`}
             </span>
-            <h2>{h.name}</h2>
+            <h2>{networkText(h.name)}</h2>
             <p>{h.model}</p>
           </div>
           <Tabs
@@ -460,7 +461,9 @@ export default function Explorer() {
               <TabsTrigger value="connections">Connections</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
-              <p className="component-description">{descriptionFor(h)}</p>
+              <p className="component-description">
+                {networkText(descriptionFor(h))}
+              </p>
               <button
                 className="text-button"
                 onClick={() => {
@@ -484,16 +487,16 @@ export default function Explorer() {
                   onClick={() => exploreNode(h.parent!)}
                 >
                   <ArrowLeft size={14} /> Back to{' '}
-                  {resolveHardware(h.parent)?.name}
+                  {networkText(resolveHardware(h.parent)?.name)}
                 </button>
               )}
               <div className="spec-list">
-                {specsFor(h).map((s) => (
+                {networkLabels(specsFor(h)).map((s) => (
                   <div className="spec-row" key={s.label}>
-                    <span>{s.label}</span>
+                    <span>{networkText(s.label)}</span>
                     <div>
                       <strong>{s.value}</strong>
-                      {s.note && <small>{s.note}</small>}
+                      {s.note && <small>{networkText(s.note)}</small>}
                     </div>
                   </div>
                 ))}
@@ -502,9 +505,9 @@ export default function Explorer() {
                 <div className="eyebrow">
                   <BookOpen size={13} /> MANUFACTURER REFERENCES
                 </div>
-                {referencesFor(h).map((s) => (
+                {networkLabels(referencesFor(h)).map((s) => (
                   <a key={s.url} href={s.url} target="_blank" rel="noreferrer">
-                    {s.title}
+                    {networkText(s.title)}
                     <ArrowUpRight size={14} />
                   </a>
                 ))}
@@ -514,7 +517,7 @@ export default function Explorer() {
               <p className="muted intro-small">
                 Select a component to locate it and inspect its specifications.
               </p>
-              {profileFor(h).parts.map((p) => (
+              {networkLabels(profileFor(h).parts).map((p) => (
                 <ComponentGroup
                   key={p.key}
                   partKey={p.key}
@@ -546,7 +549,7 @@ export default function Explorer() {
             <div className="model-maker">
               {model.custom ? 'CUSTOM CONFIGURATION' : 'PLATFORM OVERVIEW'}
             </div>
-            <h2>{model.title}</h2>
+            <h2>{networkText(model.title)}</h2>
             <p>
               {model.hardware.length} devices across {model.racks.length}{' '}
               {model.hardware.some((h) => profileFor(h).status === 'Supplied')
@@ -576,11 +579,7 @@ export default function Explorer() {
               <strong>{metrics.compute}</strong>
             </div>
             <div>
-              <span>
-                {model.hardware.some((h) => profileFor(h).status === 'Supplied')
-                  ? 'GPU memory (reference)'
-                  : 'GPU memory'}
-              </span>
+              <span>GPU memory</span>
               <strong>
                 {Number((metrics.memoryGB / 1000).toFixed(3))}
                 <small> TB</small>
@@ -599,13 +598,13 @@ export default function Explorer() {
             {model.racks.map((r) => (
               <div className="composition-row" key={r.id}>
                 <Server size={16} />
-                <span>{r.name}</span>
+                <span>{networkText(r.name)}</span>
                 <strong>{r.units}U</strong>
               </div>
             ))}
           </div>
           <div className="overview-section fabric-summary">
-            <h3>Network fabrics</h3>
+            <h3>Networks</h3>
             {Object.entries(FABRICS).map(([key, f]) => (
               <button
                 key={key}
@@ -616,7 +615,7 @@ export default function Explorer() {
               >
                 <ColorDot color={f.color} />
                 <div>
-                  <span>{f.name}</span>
+                  <span>{networkText(f.name)}</span>
                   <small>
                     {model.links.some((l) => l.fabric === key)
                       ? `${model.links.filter((l) => l.fabric === key).reduce((n, l) => n + l.count, 0)} rack links`
@@ -658,7 +657,7 @@ export default function Explorer() {
               <Plus size={14} /> Customize this layout
             </button>
           )}
-          <p className="model-footnote">{model.description}</p>
+          <p className="model-footnote">{networkText(model.description)}</p>
         </>
       )}
     </>
@@ -706,7 +705,7 @@ export default function Explorer() {
               <Server size={15} />
               <span>
                 {r.id}
-                <small>{r.name}</small>
+                <small>{networkText(r.name)}</small>
               </span>
               <span className="rack-units">{r.units}U</span>
             </button>
@@ -726,7 +725,7 @@ export default function Explorer() {
                       }}
                     >
                       <HardwareIcon kind={item.kind} size={14} />
-                      <span>{item.name}</span>
+                      <span>{networkText(item.name)}</span>
                       <small>{item.height}U</small>
                     </button>
                   ))}
@@ -742,14 +741,14 @@ export default function Explorer() {
             <p>
               {model.links.length
                 ? 'Trace rack connections in 3D. Topology also includes the vendor reference plans.'
-                : 'Open a fabric to inspect its documented ports, topology and sources.'}
+                : 'Open a network to inspect its documented ports, topology and sources.'}
             </p>
           </div>
         )}
 
         <div className="section-label">
           <Layers3 size={15} />
-          <span>FABRIC LAYERS</span>
+          <span>NETWORK LAYERS</span>
         </div>
         {model.fabricReferences && !model.links.length ? (
           Object.entries(FABRICS).map(([key, f]) => (
@@ -764,7 +763,7 @@ export default function Explorer() {
             >
               <ColorDot color={f.color} />
               <span>
-                {f.name}
+                {networkText(f.name)}
                 <small>{model.fabricReferences?.[key as Fabric].status}</small>
               </span>
               <ArrowUpRight size={14} />
@@ -780,7 +779,7 @@ export default function Explorer() {
                 className="layer-control"
               >
                 <ColorDot color={f.color} />
-                <span>{f.name}</span>
+                <span>{networkText(f.name)}</span>
                 <Switch
                   id={`layer-${key}`}
                   aria-label={`Show ${f.name}`}
@@ -893,7 +892,7 @@ export default function Explorer() {
         </button>
         <div className="header-cluster">
           <span className="tiny-divider" />
-          <span>{model.title}</span>
+          <span>{networkText(model.title)}</span>
         </div>
         <div className="header-actions">
           <button
@@ -946,7 +945,7 @@ export default function Explorer() {
           >
             <SheetTitle className="sr-only">Hardware inventory</SheetTitle>
             <SheetDescription className="sr-only">
-              Select a rack device or choose a fabric layer.
+              Select a rack device or choose a network layer.
             </SheetDescription>
             {inventoryContent}
           </SheetContent>
@@ -973,7 +972,7 @@ export default function Explorer() {
                   ? resolveHardware(node)?.name
                   : view === 'physical'
                     ? 'Rack view'
-                    : 'Fabric topology'}
+                    : 'Network topology'}
             </span>
           </div>
           <button
@@ -988,7 +987,7 @@ export default function Explorer() {
             {model.custom
               ? 'Custom layout'
               : model.fabricReferences
-                ? 'Sourced fabrics'
+                ? 'Sourced networks'
                 : 'Reference model'}
           </span>
         </div>
@@ -1072,7 +1071,7 @@ export default function Explorer() {
                     onClick={() => setTopologyFabric(key as Fabric)}
                   >
                     <ColorDot color={f.color} />
-                    {f.name}
+                    {networkText(f.name)}
                   </button>
                 ))}
               </div>
@@ -1161,9 +1160,9 @@ export default function Explorer() {
                       ? 'Isolated for inspection · orbit to see every side.'
                       : 'Select a module to inspect it on its own.'
                     : model.links.length
-                      ? 'Select a chassis to explore its components. Toggle fabric layers to trace the rack connections.'
+                      ? 'Select a chassis to explore its components. Toggle network layers to trace the rack connections.'
                       : model.fabricReferences
-                        ? 'Inspect a chassis, or open a fabric to follow its documented connection plan.'
+                        ? 'Inspect a chassis, or open a network to follow its documented connection plan.'
                         : 'Select a chassis. Open it. Follow the hardware.'}
                 </p>
               </div>
@@ -1263,7 +1262,7 @@ export default function Explorer() {
                 >
                   <HardwareIcon kind={h.kind} size={20} />
                   <span>
-                    <strong>{h.name}</strong>
+                    <strong>{networkText(h.name)}</strong>
                     <small>{h.model}</small>
                   </span>
                   <span className="mobile-selection-action">
@@ -1277,7 +1276,7 @@ export default function Explorer() {
                 ) : hover ? (
                   <>
                     <HardwareIcon kind={hover.kind} />
-                    <strong>{hover.name}</strong>
+                    <strong>{networkText(hover.name)}</strong>
                     <span>{hover.model}</span>
                     <span className="kbd">Click to inspect</span>
                   </>
@@ -1353,7 +1352,7 @@ export default function Explorer() {
               and cabinet dimensions are illustrative. These are interactive
               explanatory models, not service CAD.
             </p>
-            <h3>Fabric references</h3>
+            <h3>Network references</h3>
             <p>
               Topology views follow the named vendor reference design, with
               evidence on each connection. Solid lines describe documented link
@@ -1396,7 +1395,7 @@ export default function Explorer() {
                 ).values(),
               ].map((s) => (
                 <a key={s.url} href={s.url} target="_blank" rel="noreferrer">
-                  {s.title}
+                  {networkText(s.title)}
                   <ArrowUpRight size={14} />
                 </a>
               ))}
@@ -1483,7 +1482,7 @@ function ComponentGroup({
                 className={selected === c.id ? 'selected' : ''}
                 onClick={() => onSelect(c.id)}
               >
-                {c.name}
+                {networkText(c.name)}
                 <ArrowUpRight size={11} />
               </button>
             ))}
@@ -1510,7 +1509,7 @@ function Connections({
       <div className="connections-panel">
         <p className="connection-note">
           Connection plans describe the named vendor configuration. Inspect a
-          fabric for ports, network roles and source evidence.
+          network for ports, network roles and source evidence.
         </p>
         {Object.entries(model.fabricReferences).map(([fabric, reference]) => (
           <button
@@ -1520,7 +1519,7 @@ function Connections({
           >
             <ColorDot color={FABRICS[fabric as Fabric].color} />
             <div>
-              <strong>{FABRICS[fabric as Fabric].name}</strong>
+              <strong>{networkText(FABRICS[fabric as Fabric].name)}</strong>
               <small>
                 {reference.speed} · {reference.status}
               </small>
@@ -1534,13 +1533,14 @@ function Connections({
     <div className="connections-panel">
       {model.fabricReferences && (
         <p className="connection-note">
-          Connections in this rack layout. Open a fabric, then Vendor reference
+          Connections in this rack layout. Open a network, then Vendor reference
           for the documented design and port details.
         </p>
       )}
       {h.parent && (
         <div className="connection-note">
-          External connections belong to {resolveHardware(h.parent)?.name}.{' '}
+          External connections belong to{' '}
+          {networkText(resolveHardware(h.parent)?.name)}.{' '}
           {h.kind === 'gpu' || h.kind === 'nvlink'
             ? 'See the parent platform for its internal interconnect architecture.'
             : ''}
@@ -1556,7 +1556,7 @@ function Connections({
               onClick={() => onView(key as Fabric)}
             >
               <ColorDot color={f.color} />
-              {f.name}
+              {networkText(f.name)}
               <ArrowUpRight size={14} />
             </button>
             {matching.map((l) => {
@@ -1569,8 +1569,8 @@ function Connections({
                 >
                   <Cable size={15} />
                   <div>
-                    <strong>{resolveHardware(other)?.name}</strong>
-                    <small>{l.label}</small>
+                    <strong>{networkText(resolveHardware(other)?.name)}</strong>
+                    <small>{networkText(l.label)}</small>
                   </div>
                   <ChevronRight size={14} />
                 </button>

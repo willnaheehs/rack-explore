@@ -88,20 +88,20 @@ export const FABRICS: Record<
   { name: string; color: string; speed: string; description: string }
 > = {
   compute: {
-    name: 'Compute fabric',
+    name: 'Compute network',
     color: '#c3f16b',
     speed: '400 Gb/s NDR',
-    description: 'Eight GPU rails into a leaf–spine InfiniBand fabric.',
+    description: 'Eight GPU rails into a leaf–spine InfiniBand network.',
   },
   frontend: {
-    name: 'Front-end fabric',
+    name: 'Front-end network',
     color: '#8cafff',
     speed: '100 GbE',
     description:
       'Redundant Ethernet for user access, provisioning, and cluster services.',
   },
   storage: {
-    name: 'Storage fabric',
+    name: 'Storage network',
     color: '#de9be9',
     speed: '400 / 200 Gb/s',
     description: 'Dedicated InfiniBand paths to shared flash storage.',
@@ -285,7 +285,7 @@ export function specsFor(h: Hardware): Spec[] {
         {
           label: 'Rack space',
           value:
-            p.status === 'Supplied'
+            p.status === 'Supplied' && p.rackUnitsBasis !== 'supplied'
               ? `${p.units}U display envelope; actual height unknown`
               : `${p.units}U`,
         },

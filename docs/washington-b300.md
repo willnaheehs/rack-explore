@@ -1,77 +1,65 @@
 # Washington B300 cluster
 
-Recorded 8 September 2026. Catalog ID: `washington-b300`.
+Catalog ID: `washington-b300`. User-supplied specifications recorded and expanded
+8 September 2026. This is a reported configuration, not an independently
+surveyed installation. The cluster contains **32 nodes** and **150 TB WEKA**.
 
-This is a user-supplied configuration, not an independently verified deployment
-or an OEM reference rack. “Washington B300 cluster” is a descriptive name;
-the operator, facility and chassis manufacturer were not provided.
+| Item              | Supplied per-node configuration                                          |
+| ----------------- | ------------------------------------------------------------------------ |
+| Chassis           | 8U dual-socket AMD EPYC HGX, air-cooled; OEM SKU not supplied            |
+| GPUs              | 8 × NVIDIA B300 SXM, Blackwell Ultra                                     |
+| GPU memory        | 288 GB HBM3e each; 2.304 TB per node                                     |
+| CPU               | 2 × AMD EPYC 9555, 64 cores each, Zen 5                                  |
+| NVLink            | Fifth generation, 1.8 TB/s bidirectional per GPU                         |
+| Host RAM          | 24 × 96 GB DDR5-6400 ECC RDIMM; 2.304 TB                                 |
+| Local data drives | 8 × 3.84 TB U.2 NVMe Gen5; 30.72 TB raw                                  |
+| Boot drives       | Earlier sheet: 2 × 1.92 TB RAID-1; expanded sheet: “3.84 TB boot RAID-1” |
+| Compute network   | 8 × NVIDIA ConnectX-8 SuperNIC, 800 GbE with RoCE v2; 6.4 Tb/s aggregate |
+| Storage network   | 2 × NVIDIA ConnectX-7, single-port 400 GbE                               |
+| Location          | Washington, US; facility and operator not supplied                       |
 
-## Supplied information
+The expanded sheet explicitly distinguishes **host DDR5 RAM from GPU HBM**;
+this supersedes the earlier memory-pool ambiguity. It also establishes 8U
+height, air cooling, DIMM population, U.2 Gen5 data drives and adapter models.
 
-The source image was titled “4. Per-Unit Hardware Profile”:
+## Totals and interpretation
 
-| Component         | Supplied specification per node     |
-| ----------------- | ----------------------------------- |
-| GPU / accelerator | 8× B300 GPUs                        |
-| CPU               | 2× AMD EPYC 9555 (128 cores total)  |
-| System memory     | 2.3 TB                              |
-| Boot storage      | 2× 1.92 TB RAID-1 (3.84 TB total)   |
-| Data storage      | 8× 3.84 TB NVMe SSD (30.7 TB total) |
-| Interconnect      | 6.4 Tbps RoCE v2                    |
-| Location          | Washington, US                      |
+- 256 GPUs, 64 CPUs, 4,096 CPU cores and 768 host DIMMs.
+- 73.728 TB host DDR5 and a separate 73.728 TB GPU HBM pool.
+- 256 ConnectX-8 compute adapters and 64 ConnectX-7 storage adapters.
+- Compute: 204.8 Tb/s summed endpoint rates; storage: 25.6 Tb/s summed endpoint
+  rates. Neither number is measured throughput or network bisection bandwidth.
+- Local data: 983.04 TB raw. Protection and usable capacity are unspecified.
+- WEKA: 150 TB shared; raw versus usable and dedicated versus converged
+  deployment are unspecified. Whether local drives back WEKA is unknown,
+  so their capacities must not be added together.
+- Boot: the original 2 × 1.92 TB mirror gives 3.84 TB raw and 1.92 TB usable
+  before overhead. The expanded sheet does not establish whether its 3.84 TB
+  figure instead means usable capacity. The model retains the original drive
+  pair and explicitly asks for this clarification.
 
-The user clarified: **32 nodes, with 150 TB WEKA**. WEKA capacity is recorded
-once for the cluster, not once per node.
+## Geometry and network boundaries
 
-## Derived totals and interpretation
+Eight display racks with four nodes each are an illustrative arrangement.
+Chassis depth is drawn as 0.9 m; actual OEM dimensions, rack count, U locations,
+mounting details, cooling airflow, fan/PSU inventory and power limits remain
+unknown. The power view uses an editable 15 kW/node planning allowance.
 
-- 32 × 8 = **256 B300 GPUs**.
-- 32 × 2 = **64 EPYC 9555 CPUs**, or **4,096 physical CPU cores**.
-- Boot: **3.84 TB raw per node**, **1.92 TB usable under RAID-1 before
-  overhead**. Across 32 independent mirrors this is 122.88 TB raw / 61.44 TB
-  usable, not a shared filesystem.
-- Local data: **30.72 TB raw per node**, **983.04 TB raw cluster-wide**.
-  RAID / erasure coding and usable local capacity were not given.
-- The supplied 2.3 TB “system memory” label is preserved, with a confirmation
-  flag. It also matches the nominal aggregate HBM capacity of eight B300 GPUs;
-  host DDR5 and GPU HBM must not be conflated. No DIMM population is inferred.
-- 6.4 Tb/s is an aggregate per-node RoCE v2 rate. Multiplying by 32 gives
-  204.8 Tb/s of summed endpoint rates, **not** measured throughput or fabric
-  bisection bandwidth. No per-port speed, adapter model or switch is inferred.
-- 150 TB WEKA is a shared service. Raw/usable basis, protection, dedicated or
-  converged deployment and backend hardware are unknown. Its capacity is not
-  added to local NVMe because the relationship between the pools is unknown.
+The network views show every adapter on one representative node. Selecting an
+adapter opens its hardware inspector. Lines show logical attachments and
+capacity boundaries until the installed switching and cable map is supplied.
+No GPU-to-NIC pairing, switch quantity, destination port, or external physical
+cable is inferred. Compute and storage have separate adapter budgets; using
+an adapter in a custom plan does not qualify its port/breakout mode or optics.
 
-## Display assumptions
+WEKA is represented as a storage service rather than an invented appliance.
+Its backend server, board, drive and network inventories remain unknown.
 
-The physical view arranges the 32 nodes in **eight illustrative 42U racks**, with
-four generic 8U, 0.9 m deep server envelopes in each. Actual rack count,
-dimensions, U positions, mounting, weight and cooling are unknown. This is a
-navigation layout, not a validated installation drawing or fit recommendation.
+## Component context and next inputs
 
-GPUs, CPUs and drives use supplied per-node populations. Memory, network, host
-board, GPU board and storage connectivity use representative functional blocks.
-Their geometry and block counts are not a board layout or bill of materials.
-No installed fan, PSU, NVSwitch, NIC or DIMM count is fabricated.
+- [AMD EPYC 9555](https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9555.html): processor specifications.
+- [NVIDIA HGX B300](https://docs.nvidia.com/enterprise-reference-architectures/hgx-ai-factory/latest/components.html): GPU, memory and NVLink context; not an OEM installation certificate.
+- [WEKA architecture](https://www.weka.io/resources/white-paper/wekaio-architectural-whitepaper): deployment models, not this service's installed backend inventory.
 
-WEKA is inspectable as a service in the Storage fabric and Infrastructure views.
-There is no invented storage appliance. Network lines are capabilities or
-logical associations; no physical cables are created. The front-end network
-remains unspecified. The Power view uses an editable **15 kW/node planning
-allowance**, not a measurement, validated maximum or PSU rating. It excludes
-unknown storage/network equipment and does not validate rack power or cooling.
-
-## Component context
-
-- [AMD EPYC 9555 specifications](https://www.amd.com/en/products/processors/server/epyc/9005-series/amd-epyc-9555.html)
-  establish 64 cores per processor.
-- [NVIDIA HGX B300 components](https://docs.nvidia.com/enterprise-reference-architectures/hgx-ai-factory/latest/components.html)
-  give nominal 288 GB HBM3e per B300 GPU and NVLink platform context. These
-  component references do not verify the supplied cluster’s OEM build.
-- [WEKA architecture](https://www.weka.io/resources/white-paper/wekaio-architectural-whitepaper)
-  describes software-defined storage and dedicated/converged deployment models;
-  it does not identify this cluster’s backend hardware.
-
-To replace the remaining assumptions, obtain the OEM chassis SKU and BoM,
-rack elevations, host DIMM population, adapter/switch/port and cable inventory,
-WEKA backend inventory and usable-capacity report, and electrical/cooling data.
+See [the operator information request](network-inventory-request.md) for the
+remaining switch, cable map, RoCE configuration and WEKA connection details.

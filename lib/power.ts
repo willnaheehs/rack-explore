@@ -262,7 +262,7 @@ export function powerAllocation(h: Hardware, dcKW: number) {
     },
     {
       key: 'network',
-      label: 'Fabric & adapters',
+      label: 'Network & adapters',
       kinds: ['nic', 'nvlink', 'asic', 'port'],
       weight: 8,
       voltage: 'ASIC core and transceiver rails',
