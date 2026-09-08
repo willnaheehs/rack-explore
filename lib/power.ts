@@ -206,6 +206,7 @@ export function devicePowerBudget(
     };
   }
   const examples: Record<string, number> = {
+    'washington-b300': 15,
     'dell-xe9780': 14.5,
     'hpe-xd685': 15,
     'lenovo-sr680a-v4': 14.5,

@@ -30,7 +30,11 @@ export type FabricConnection = {
 export type FabricReference = {
   id: string;
   title: string;
-  status: 'Reference design' | 'Interface specifications' | 'Not applicable';
+  status:
+    | 'Reference design'
+    | 'Interface specifications'
+    | 'Supplied configuration'
+    | 'Not applicable';
   scope: string;
   speed: string;
   summary: string;
@@ -843,11 +847,86 @@ function interfaces(model: ClusterModel): FabricReferences {
     storage: make('storage'),
   };
 }
+function washington(model: ClusterModel): FabricReferences {
+  const profile = profileFor(model.hardware[0]);
+  const refs = profile.sources.map((s) => ({
+    ...s,
+    section: 'Supplied cluster profile and component context',
+  }));
+  const make = (fabric: Fabric): FabricReference => {
+    const p = plan(
+      `washington-b300-${fabric}`,
+      `Washington B300 · ${fabric === 'storage' ? 'WEKA storage' : fabric === 'compute' ? 'RoCE v2 interconnect' : 'front end'}`,
+      fabric === 'compute'
+        ? '6.4 Tb/s per node'
+        : fabric === 'storage'
+          ? '150 TB shared'
+          : 'Not supplied',
+      '32-node supplied configuration · physical cabling unknown',
+      fabric === 'compute'
+        ? '32 nodes, each reporting 6.4 Tb/s aggregate RoCE v2. Adapter models, port counts, switching and oversubscription are not specified.'
+        : fabric === 'storage'
+          ? '150 TB of shared WEKA storage serves the cluster. This service view does not assume dedicated storage appliances or reuse of the nodes’ local NVMe.'
+          : 'The cluster front-end and management network were not included in the supplied configuration.',
+      refs,
+      'Supplied configuration',
+    );
+    node(
+      p,
+      'nodes',
+      '32 B300 nodes',
+      '256 GPUs · 4,096 CPU cores',
+      0,
+      'Each node: 8 B300 GPUs, 2 AMD EPYC 9555 CPUs, a mirrored boot pair and 8 local 3.84 TB NVMe drives. Select any node in the Physical view to inspect its components.',
+    );
+    if (fabric === 'compute') {
+      node(
+        p,
+        'roce',
+        'RoCE v2 interconnect',
+        '6.4 Tb/s aggregate / node',
+        1,
+        'Ethernet RDMA is supplied. NIC model/count, per-port speed, switch inventory, rails, optics and cable schedule are unknown. 32 × 6.4 = 204.8 Tb/s summed endpoint rates, not fabric bisection bandwidth or achieved throughput.',
+      );
+      edge(p, 'nodes', 'roce', '6.4 Tb/s per node', {
+        kind: 'capability',
+        protocol: 'Ethernet / RoCE v2',
+        detail:
+          'Aggregate capability only; no physical port count or cable rate is inferred.',
+      });
+    } else if (fabric === 'storage') {
+      node(
+        p,
+        'weka',
+        'WEKA shared storage',
+        '150 TB · cluster total',
+        1,
+        '150 TB is user supplied; raw versus usable capacity and data protection are unconfirmed. Backend server count, CPU/RAM, NVMe population and network interfaces are not supplied. Dedicated and converged WEKA deployments are both possible. The nodes contain 983.04 TB of raw local data NVMe in total; whether any of it backs WEKA is unknown, so these capacities are not added together.',
+      );
+      edge(p, 'nodes', 'weka', 'Shared storage service', {
+        kind: 'relationship',
+        protocol: 'Storage transport not supplied',
+        detail:
+          'Logical service association. Storage bandwidth and physical network separation from RoCE compute traffic are unconfirmed.',
+      });
+    }
+    p.limitations.push(
+      'Supplied configuration, not an independently observed installation. No switch bill of materials, numbered ports or external cables are asserted.',
+    );
+    return p;
+  };
+  return {
+    compute: make('compute'),
+    storage: make('storage'),
+    frontend: make('frontend'),
+  };
+}
 export function referenceFabricsFor(
   model: ClusterModel,
 ): FabricReferences | undefined {
   if (model.custom || !model.hardware.length) return;
   const id = model.id;
+  if (id === 'washington-b300') return washington(model);
   if (id === 'h100-cluster' || id === 'dgx-h100' || id === 'dgx-h200') {
     const result = nvidia(model, 'h100');
     if (id === 'dgx-h200')

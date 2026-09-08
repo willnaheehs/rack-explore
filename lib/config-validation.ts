@@ -152,7 +152,11 @@ export function validateConfiguration(model: ClusterModel): ConfigReport {
     const representative = p.parts
       .filter((part) => part.population === 'representative')
       .map((part) => part.title);
-    if (representative.length)
+    if (
+      representative.length &&
+      (p.status !== 'Supplied' ||
+        safeHardware.find((item) => profileFor(item).id === p.id)?.id === h.id)
+    )
       issue(
         'review',
         'Components',
@@ -295,10 +299,37 @@ export function validateConfiguration(model: ClusterModel): ConfigReport {
     'Components',
     'Internal board geometry and routing are functional illustrations. Service CAD, revision-specific board layouts and unlisted auxiliary parts remain unverified.',
   );
+  const supplied = safeHardware.some(
+    (h) => profileFor(h).status === 'Supplied',
+  );
+  if (supplied) {
+    issue(
+      'review',
+      'Placement',
+      'Supplied configuration: rack count, chassis size, mounting and positions are illustrative. Passing geometric checks only validates the display arrangement.',
+    );
+    issue(
+      'review',
+      'Components',
+      'Supplied configuration: confirm the 2.3 TB memory pool and DIMM population, chassis / board SKUs, cooling and PSU inventory. RAID-1 boot capacity is 1.92 TB usable per node before overhead.',
+    );
+    issue(
+      'review',
+      'Networking',
+      '6.4 Tb/s RoCE v2 is an aggregate per-node rate. NIC and port populations are unknown; physical cable validation requires their actual specifications.',
+    );
+    issue(
+      'review',
+      'Components',
+      '150 TB WEKA is a shared service capacity. Raw versus usable, backend hardware, data protection and overlap with local NVMe remain unconfirmed.',
+    );
+  }
   const details: Record<string, string> = {
     Placement: `${model.racks.length} racks · U bounds, overlap, mounting family and chassis heights checked`,
     Components: `${model.hardware.length} devices · ${componentCount} inspectable modules or positions`,
-    Sources: `${sources.size} manufacturer references · catalog reviewed ${CATALOG_DATE}`,
+    Sources: supplied
+      ? `${sources.size} source references · supplied configuration recorded 8 September 2026`
+      : `${sources.size} manufacturer references · catalog reviewed ${CATALOG_DATE}`,
     Networking: `${model.links.length} configured link groups · endpoint and capacity checks`,
     'Fabric references': model.fabricReferences
       ? Object.entries(model.fabricReferences)

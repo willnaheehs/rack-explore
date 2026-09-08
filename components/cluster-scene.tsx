@@ -657,7 +657,9 @@ export default function ClusterScene(props: Props) {
           );
           box(0.32, 0.013, 0.007, accent, 0, -H * 0.16, 0.478, g);
         }
-        if (isB300) {
+        if (pr.status === 'Supplied') {
+          grille(0.43, H * 0.72, '#424b4b', rear, 0, 0, 0.016);
+        } else if (isB300) {
           psuGrid(rear, 12, 2, 0.42, H * 0.24, H * 0.36, 0.016);
           fanGrid(rear, 4, 5, 0.42, H * 0.68, -H * 0.13, 0.02);
         } else if (pr.id === 'lenovo-sr680a-v4') {

@@ -73,7 +73,11 @@ export default function ReferenceTopology({
           <div className="reference-status">
             <Check size={13} />
             {plan.status}
-            <span>Checked 6 Sep 2026</span>
+            <span>
+              {plan.status === 'Supplied configuration'
+                ? 'Recorded 8 Sep 2026'
+                : 'Checked 6 Sep 2026'}
+            </span>
           </div>
           <h1>{plan.title}</h1>
           <p>{plan.scope}</p>

@@ -264,17 +264,31 @@ export function specsFor(h: Hardware): Spec[] {
   return part
     ? [
         ...part.specs,
-        { label: 'Population basis', value: populationLabel(part) },
+        {
+          label: 'Population basis',
+          value:
+            p.status === 'Supplied' && part.population === 'fixed'
+              ? 'Supplied per-node population'
+              : populationLabel(part),
+        },
         {
           label: 'Representation',
           value: part.schematic
             ? 'Representative functional block'
-            : 'Documented module type; schematic placement',
+            : p.status === 'Supplied'
+              ? 'Supplied module type; schematic placement'
+              : 'Documented module type; schematic placement',
         },
       ]
     : [
         { label: 'Platform', value: `${p.maker} ${p.name}` },
-        { label: 'Rack space', value: `${p.units}U` },
+        {
+          label: 'Rack space',
+          value:
+            p.status === 'Supplied'
+              ? `${p.units}U display envelope; actual height unknown`
+              : `${p.units}U`,
+        },
         { label: 'Cooling design', value: p.cooling },
         ...p.specs.filter(
           (s) =>

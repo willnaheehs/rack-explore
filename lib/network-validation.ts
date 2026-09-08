@@ -105,6 +105,12 @@ export function networkErrors(model: ClusterModel): string[] {
       errors.push(`${link.id}: choose two existing, different devices.`);
       continue;
     }
+    if ([a, b].some((h) => profileFor(h).status === 'Supplied')) {
+      errors.push(
+        `${link.id}: NIC and port populations were not supplied; the 6.4 Tb/s aggregate does not establish a compatible physical cable mode.`,
+      );
+      continue;
+    }
     if (
       !['compute', 'frontend', 'storage'].includes(link.fabric) ||
       ![100, 200, 400, 800].includes(link.rate) ||

@@ -133,7 +133,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
           configurationChecks: validateConfiguration(actions.read().model),
           fabricReferences: referenceSummary(),
           availablePlatforms: VISIBLE_CATALOG.filter(
-            (p) => p.status === 'Documented',
+            (p) => p.status !== 'Preliminary',
           ).map((p) => ({ id: p.id, name: `${p.maker} ${p.name}` })),
           fabricConnections: Object.keys(FABRICS).map((fabric) => ({
             fabric,
@@ -188,7 +188,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
           state: snapshot(),
           fabricReferences: referenceSummary(),
           availablePlatforms: VISIBLE_CATALOG.filter(
-            (p) => p.status === 'Documented',
+            (p) => p.status !== 'Preliminary',
           ).map((p) => ({ id: p.id, name: `${p.maker} ${p.name}` })),
           fabricConnections: Object.keys(FABRICS).map((fabric) => ({
             fabric,
@@ -235,7 +235,7 @@ export function explorerTools(actions: ExplorerActions): Tool[] {
         if (
           values.platformId !== undefined &&
           !VISIBLE_CATALOG.some(
-            (p) => p.id === values.platformId && p.status === 'Documented',
+            (p) => p.id === values.platformId && p.status !== 'Preliminary',
           )
         )
           throw new Error(

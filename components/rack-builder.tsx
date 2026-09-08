@@ -42,7 +42,7 @@ import {
 } from '@/lib/rack-builder';
 import { Choice } from './catalog-panel';
 const options = CATALOG.filter(
-  (p) => !p.hidden && p.status === 'Documented' && p.mount === '19-inch',
+  (p) => !p.hidden && p.status !== 'Preliminary' && p.mount === '19-inch',
 );
 const uid = () => `device-${crypto.randomUUID().slice(0, 8)}`;
 export default function RackBuilder({
@@ -442,7 +442,9 @@ export default function RackBuilder({
                 </span>
                 <h3>{profile.name}</h3>
                 <p>
-                  {profile.units}U · {profile.cooling} cooled
+                  {profile.status === 'Supplied'
+                    ? `${profile.units}U display envelope · actual size / cooling unknown`
+                    : `${profile.units}U · ${profile.cooling} cooled`}
                   <br />
                   {profile.maker} · {profile.family}
                 </p>

@@ -154,6 +154,34 @@ export function modelForProfile(id: string): ClusterModel {
   const profile = p(id);
   if (profile.status === 'Preliminary')
     throw new Error('Preliminary platform has no verified rack layout.');
+  if (id === 'washington-b300') {
+    const racks: Rack[] = Array.from({ length: 8 }, (_, i) => ({
+      id: `W${i + 1}`,
+      name: `Display rack ${i + 1}`,
+      role: 'Illustrative placement · 4 nodes',
+      units: 42,
+      x: (i - 3.5) * 0.8,
+      color: profile.color,
+      mount: '19-inch',
+      depth: 1.2,
+    }));
+    return {
+      id,
+      title: profile.name,
+      description: profile.description,
+      racks,
+      hardware: Array.from({ length: 32 }, (_, i) => ({
+        ...equipment(
+          id,
+          racks[Math.floor(i / 4)].id,
+          1 + (i % 4) * 8,
+          `b300-${String(i + 1).padStart(2, '0')}`,
+        ),
+        name: `B300 node ${String(i + 1).padStart(2, '0')}`,
+      })),
+      links: [],
+    };
+  }
   if (id === 'gb200-nvl72' || id === 'gb300-nvl72') {
     const gen = id.startsWith('gb300') ? 'gb300' : 'gb200';
     const rack: Rack = {
@@ -253,6 +281,10 @@ export function addConnection(
     b = model.hardware.find((h) => h.id === input.to);
   if (!a || !b || a.id === b.id)
     throw new Error('Choose two different devices.');
+  if ([a, b].some((h) => profileFor(h).status === 'Supplied'))
+    throw new Error(
+      'NIC and port populations were not supplied. Confirm them before adding physical cables; aggregate RoCE capacity does not specify a cable mode.',
+    );
   if (
     !['compute', 'storage', 'frontend'].includes(input.fabric) ||
     ![100, 200, 400, 800].includes(input.rate)

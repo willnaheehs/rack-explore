@@ -68,12 +68,15 @@ export function infrastructureFromCluster(model: ClusterModel): Infrastructure {
       },
     },
   };
-  const sourcesFor = (sources: { title: string; url: string }[]) =>
+  const sourcesFor = (
+    sources: { title: string; url: string }[],
+    asOf = CATALOG_REVISION,
+  ) =>
     sources.map((s) => {
       if (!sourceMap.has(s.url)) {
         const id = `source-${sourceMap.size + 1}`;
         sourceMap.set(s.url, id);
-        doc.sources.push({ id, ...s, retrievedAt: CATALOG_REVISION });
+        doc.sources.push({ id, ...s, retrievedAt: asOf });
       }
       return sourceMap.get(s.url)!;
     });
@@ -167,7 +170,7 @@ export function infrastructureFromCluster(model: ClusterModel): Infrastructure {
   }
   for (const h of model.hardware) {
     const p = profileFor(h),
-      sourceIds = sourcesFor(p.sources);
+      sourceIds = sourcesFor(p.sources, p.recordedAt);
     const facts = (hardware: Hardware): Fact[] =>
       specsFor(hardware).map((s, index) => ({
         key: keyFor(s.label, index),
@@ -176,7 +179,7 @@ export function infrastructureFromCluster(model: ClusterModel): Infrastructure {
         evidence: {
           basis: 'derived',
           sources: sourceIds,
-          asOf: CATALOG_REVISION,
+          asOf: p.recordedAt ?? CATALOG_REVISION,
           note:
             s.note ??
             'Catalog snapshot. Published capabilities, options and illustrative details retain their original qualifications.',
@@ -320,6 +323,67 @@ export function infrastructureFromCluster(model: ClusterModel): Infrastructure {
       },
     });
   }
+  if (model.id === 'washington-b300') {
+    const p = profileFor(model.hardware[0]);
+    const evidence: Evidence = {
+      basis: 'reported',
+      sources: sourcesFor([p.sources[0]], p.recordedAt),
+      asOf: p.recordedAt,
+      note: 'User-supplied cluster specification; not independently observed.',
+    };
+    addType({
+      id: 'service.weka.washington',
+      revision: 1,
+      name: 'WEKA shared storage',
+      category: 'storage-service',
+      ports: [],
+      facts: [
+        {
+          key: 'storage.capacity',
+          label: 'Shared storage capacity',
+          value: 150,
+          unit: 'TB',
+          evidence,
+        },
+        {
+          key: 'storage.capacity-basis',
+          label: 'Capacity basis',
+          value: 'Raw versus usable not supplied',
+          evidence,
+        },
+        {
+          key: 'storage.hardware',
+          label: 'Backend hardware',
+          value: 'Server, board, drive and interface populations not supplied',
+          evidence,
+        },
+        {
+          key: 'storage.deployment',
+          label: 'Deployment',
+          value:
+            'Dedicated versus converged unknown; relationship to local NVMe unconfirmed',
+          evidence,
+        },
+      ],
+    });
+    doc.assets.push({
+      id: 'washington-b300/weka',
+      name: 'WEKA · 150 TB shared storage',
+      typeId: 'service.weka.washington',
+      typeRevision: 1,
+      parentId: rootId,
+      representation: 'aggregate',
+      quantity: 1,
+      facts: [],
+      evidence,
+      extensions: { [ns]: { role: 'logical-resource' } },
+    });
+    doc.groups.push({
+      id: 'weka-clients',
+      name: 'Shared WEKA service and compute nodes · physical connectivity unconfirmed',
+      assetIds: ['washington-b300/weka', ...model.hardware.map((h) => h.id)],
+    });
+  }
   doc.interfaces = [...ports.values()];
   doc.groups.push({
     id: 'cluster',
@@ -354,6 +418,9 @@ export function clusterFromInfrastructure(doc: Infrastructure): ClusterModel {
         `${a.name} has no catalog rendering; explore it in Infrastructure.`,
       );
     if (meta.role === 'root') continue;
+    // The canonical comparison below rejects edits that cannot be preserved by
+    // the catalog projection; the service itself is explored in Infrastructure.
+    if (meta.role === 'logical-resource') continue;
     if (meta.role === 'component') {
       if (
         !doc.assets.some(

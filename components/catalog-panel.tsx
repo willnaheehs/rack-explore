@@ -143,9 +143,8 @@ export default function CatalogPanel({
           </div>
           <DialogTitle>Explore the hardware.</DialogTitle>
           <DialogDescription>
-            Documented systems from NVIDIA, AMD, Dell, HPE, Lenovo, Supermicro,
-            and DDN. Select a platform to open its rack and inspect the
-            internals.
+            Manufacturer references and supplied cluster configurations. Select
+            a platform to explore its racks and inspect the components.
           </DialogDescription>
         </DialogHeader>
         <div className="catalog-controls">
@@ -171,6 +170,7 @@ export default function CatalogPanel({
               'Lenovo',
               'Supermicro',
               'DDN',
+              'Unspecified OEM',
             ].map((value) => ({ value, label: value }))}
           />
           <Choice
@@ -219,9 +219,11 @@ export default function CatalogPanel({
                   >
                     {p.status === 'Preliminary'
                       ? 'PRELIMINARY'
-                      : p.category === 'rack'
-                        ? 'INTEGRATED RACK'
-                        : `${p.units}U`}
+                      : p.status === 'Supplied'
+                        ? 'SUPPLIED CONFIG'
+                        : p.category === 'rack'
+                          ? 'INTEGRATED RACK'
+                          : `${p.units}U`}
                   </span>
                 </div>
                 <DeviceElevation profile={p} />
@@ -230,7 +232,7 @@ export default function CatalogPanel({
                 <div className="platform-facts">
                   <span>
                     {p.gpuCount
-                      ? `${p.gpuCount} GPUs`
+                      ? `${p.gpuCount * (p.clusterNodes ?? 1)} GPUs${p.clusterNodes ? ' total' : ''}`
                       : p.category === 'storage'
                         ? 'NVMe flash'
                         : 'Network fabric'}
@@ -252,7 +254,7 @@ export default function CatalogPanel({
                   >
                     <BookOpen size={14} /> Details
                   </button>
-                  {p.status === 'Documented' && (
+                  {p.status !== 'Preliminary' && (
                     <button
                       className="primary-button"
                       onClick={() => load(modelForProfile(p.id))}
@@ -282,7 +284,7 @@ export default function CatalogPanel({
                         <ArrowUpRight size={13} />
                       </a>
                     ))}
-                    {p.status === 'Documented' && p.mount === '19-inch' && (
+                    {p.status !== 'Preliminary' && p.mount === '19-inch' && (
                       <button
                         className="text-button"
                         onClick={() => {
@@ -290,7 +292,10 @@ export default function CatalogPanel({
                           onOpenChange(false);
                         }}
                       >
-                        <Plus size={15} /> Add to a custom rack
+                        <Plus size={15} />{' '}
+                        {p.clusterNodes
+                          ? 'Add one node to a custom rack'
+                          : 'Add to a custom rack'}
                       </button>
                     )}
                   </div>
@@ -306,9 +311,11 @@ export default function CatalogPanel({
           <p className="catalog-coverage">
             A curated, dated catalog of major platform families, not every OEM
             configuration. Documented means a manufacturer reference is
-            available; it does not assert stock availability. Preliminary
-            platforms have no buildable chassis model. Cabinet and internal
-            board geometry are explanatory models.
+            available; it does not assert stock availability. Supplied
+            configurations preserve user-provided specifications and flag
+            missing installation details. Preliminary platforms have no
+            buildable chassis model. Cabinet and internal board geometry are
+            explanatory models.
           </p>
         </div>
       </DialogContent>

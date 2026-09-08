@@ -549,11 +549,21 @@ export default function Explorer() {
             <h2>{model.title}</h2>
             <p>
               {model.hardware.length} devices across {model.racks.length}{' '}
-              {model.racks.length === 1 ? 'rack' : 'racks'}
+              {model.hardware.some((h) => profileFor(h).status === 'Supplied')
+                ? 'display racks · placement illustrative'
+                : model.racks.length === 1
+                  ? 'rack'
+                  : 'racks'}
             </p>
             <span className="reference-chip">
               <Check size={12} />{' '}
-              {model.custom ? 'Your layout' : 'Source-backed hardware'}
+              {model.custom
+                ? 'Your layout'
+                : model.hardware.some(
+                      (h) => profileFor(h).status === 'Supplied',
+                    )
+                  ? 'Supplied configuration'
+                  : 'Source-backed hardware'}
             </span>
           </div>
           <div className="overview-metrics">
@@ -566,7 +576,11 @@ export default function Explorer() {
               <strong>{metrics.compute}</strong>
             </div>
             <div>
-              <span>GPU memory</span>
+              <span>
+                {model.hardware.some((h) => profileFor(h).status === 'Supplied')
+                  ? 'GPU memory (reference)'
+                  : 'GPU memory'}
+              </span>
               <strong>
                 {Number((metrics.memoryGB / 1000).toFixed(3))}
                 <small> TB</small>
@@ -1004,13 +1018,17 @@ export default function Explorer() {
                 ? 'SOURCE → RACK → COMPONENT'
                 : node
                   ? 'COMPONENT ARCHITECTURE'
-                  : `${model.racks.length} RACKS / ${model.racks[0].units}U`}
+                  : `${model.racks.length} ${model.hardware.some((h) => profileFor(h).status === 'Supplied') ? 'DISPLAY RACKS' : 'RACKS'} / ${model.racks[0].units}U`}
               <span>
                 {view === 'power'
                   ? 'Energy conversion · redundancy · load'
                   : node
                     ? 'Schematic board and module placement'
-                    : '19-inch mounting · metric scale'}
+                    : model.hardware.some(
+                          (h) => profileFor(h).status === 'Supplied',
+                        )
+                      ? 'Illustrative placement · actual rack layout unknown'
+                      : '19-inch mounting · metric scale'}
               </span>
             </div>
           </div>
@@ -1073,7 +1091,10 @@ export default function Explorer() {
                     >
                       <TabsTrigger value="rack">Rack connections</TabsTrigger>
                       <TabsTrigger value="reference">
-                        Vendor reference
+                        {model.fabricReferences?.[topologyFabric]?.status ===
+                        'Supplied configuration'
+                          ? 'Supplied configuration'
+                          : 'Vendor reference'}
                       </TabsTrigger>
                     </TabsList>
                   )}

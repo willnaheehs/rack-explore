@@ -1,4 +1,5 @@
 import type { Hardware, HardwareKind, Spec } from './hardware.ts';
+import { WASHINGTON_B300 } from './supplied-clusters.ts';
 export type Reference = { title: string; url: string };
 export type Part = {
   key: string;
@@ -17,7 +18,9 @@ export type Profile = {
   name: string;
   family: string;
   category: 'compute' | 'network' | 'storage' | 'rack' | 'infrastructure';
-  status: 'Documented' | 'Preliminary';
+  status: 'Documented' | 'Preliminary' | 'Supplied';
+  clusterNodes?: number;
+  recordedAt?: string;
   units: number;
   depth: number;
   width?: number;
@@ -1386,6 +1389,7 @@ const future: Profile[] = [
   },
 ];
 export const CATALOG: Profile[] = [
+  WASHINGTON_B300,
   ...nvlProfiles,
   b300,
   b200,
@@ -1412,7 +1416,9 @@ export const CATALOG: Profile[] = [
 for (const profile of CATALOG) {
   profile.parts = profile.parts.map((part) => {
     const configurable =
-      !profile.id.startsWith('dgx-') && !profile.id.startsWith('gb');
+      profile.status !== 'Supplied' &&
+      !profile.id.startsWith('dgx-') &&
+      !profile.id.startsWith('gb');
     let population =
       part.population ?? (part.schematic ? 'representative' : 'fixed');
     if (
